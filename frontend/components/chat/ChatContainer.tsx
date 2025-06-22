@@ -123,6 +123,11 @@ export function ChatContainer() {
   const handleSendMessage = async (content: string, images: File[]) => {
     if (!currentSessionId) return;
     if (!content.trim() && images.length === 0) return;
+    if (!settings.apiKey) {
+      setSettingsModalMessage('Please set your ChatGPT API key to send a message.');
+      setIsSettingsOpen(true);
+      return;
+    }
 
     const imagePreviews = images.map(file => URL.createObjectURL(file));
 
