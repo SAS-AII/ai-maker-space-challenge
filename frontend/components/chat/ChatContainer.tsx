@@ -7,8 +7,8 @@ import { ChatMessage } from './ChatMessage';
 import { ChatInput } from './ChatInput';
 import { SettingsModal } from './SettingsModal';
 import { ModelSelector } from './ModelSelector';
-import { sendChatMessage } from '@/lib/api';
-import { generateId, generateChatTitle } from '@/lib/utils';
+import { sendChatMessage } from '../../lib/api';
+import { generateId, generateChatTitle } from '../../lib/utils';
 import { Settings as SettingsIcon } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 

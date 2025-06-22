@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Message } from '@/types/chat';
-import { formatTimestamp } from '@/lib/utils';
-import { cn } from '@/lib/utils';
+import { formatTimestamp } from '../../lib/utils';
+import { cn } from '../../lib/utils';
 import { X } from 'lucide-react';
 
 interface ChatMessageProps {

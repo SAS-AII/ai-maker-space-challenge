@@ -1,9 +1,9 @@
 import React from 'react';
 import { ChatSession } from '@/types/chat';
-import { formatDate } from '@/lib/utils';
+import { formatDate } from '../../lib/utils';
 import { Button } from '@/components/ui/Button';
 import { Plus, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn } from '../../lib/utils';
 
 interface ChatSidebarProps {
   sessions: ChatSession[];
