@@ -49,15 +49,15 @@ logger = AppLogger(__name__).get_logger()
 # Add middleware to log all incoming requests
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
-    print(f"Incoming request: {request.method} {request.url.path}")
-    print(f"Headers: {dict(request.headers)}")
+    logger.info(f"Incoming request: {request.method} {request.url.path}")
+    logger.info(f"Headers: {dict(request.headers)}")
     try:
         body = await request.body()
-        print(f"Body: {body.decode('utf-8', errors='replace')}")
+        logger.info(f"Body: {body.decode('utf-8', errors='replace')}")
     except Exception as e:
-        print(f"Could not read body: {e}")
+        logger.error(f"Could not read body: {e}")
     response = await call_next(request)
-    print(f"Response status: {response.status_code}")
+    logger.info(f"Response status: {response.status_code}")
     return response
 
 @app.post("/api/chat")
@@ -71,19 +71,19 @@ async def chat(
     and proxies the chunks back to the client as a text stream.
     """
     if not apiKey:
-        print("API key is required. Please provide your OpenAI API key in the settings.")
+        logger.error("API key is required. Please provide your OpenAI API key in the settings.")
         raise HTTPException(status_code=400, detail="API key is required. Please provide your OpenAI API key in the settings.")
     try:
         messages_list = json.loads(messages)
     except json.JSONDecodeError as e:
-        print(f"Invalid JSON in messages field: {e}")
+        logger.error(f"Invalid JSON in messages field: {e}")
         raise HTTPException(status_code=400, detail="Invalid JSON in messages field")
 
     if images:
         for img in images:
             content = await img.read()
             base64_image = base64.b64encode(content).decode("utf-8")
-            print(f"Processing uploaded image: {img.filename}, type: {img.content_type}")
+            logger.info(f"Processing uploaded image: {img.filename}, type: {img.content_type}")
             # Construct the user message with image content
             # OpenAI expects a specific format for this
             messages_list.append({
@@ -98,7 +98,7 @@ async def chat(
                 ]
             })
 
-    print(f"Received chat request: model=gpt-4o-mini, messages_count={len(messages_list)}, images_count={len(images) if images else 0}")
+    logger.info(f"Received chat request: model=gpt-4o-mini, messages_count={len(messages_list)}, images_count={len(images) if images else 0}")
 
     # Always require user-provided apiKey
     openai_client = openai.OpenAI(api_key=apiKey)
@@ -117,7 +117,7 @@ async def chat(
                 if delta is not None:
                     yield delta
         except Exception as e:
-            print(f"Error during OpenAI streaming: {e}")
+            logger.error(f"Error during OpenAI streaming: {e}")
             raise
 
     return StreamingResponse(generate(), media_type="text/plain")
