@@ -570,7 +570,6 @@ git merge main
 ```
 
 ### 🔄 Branch Issues
-
 ```bash
 # Delete local branch (clean up your workspace)
 git branch -d <BRANCH-NAME>

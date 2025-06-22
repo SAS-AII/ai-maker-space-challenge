@@ -1,0 +1,164 @@
+import React, { useState, useRef } from 'react';
+import { Button } from '@/components/ui/Button';
+import { Send, Image, X } from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+interface ChatInputProps {
+  onSendMessage: (content: string, images?: string[]) => void;
+  disabled?: boolean;
+  placeholder?: string;
+}
+
+export function ChatInput({ 
+  onSendMessage, 
+  disabled = false, 
+  placeholder = "Type a message..." 
+}: ChatInputProps) {
+  const [message, setMessage] = useState('');
+  const [selectedImages, setSelectedImages] = useState<string[]>([]);
+  const [isDragOver, setIsDragOver] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (message.trim() || selectedImages.length > 0) {
+      onSendMessage(message.trim(), selectedImages.length > 0 ? selectedImages : undefined);
+      setMessage('');
+      setSelectedImages([]);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit(e);
+    }
+  };
+
+  const handleImageUpload = (files: FileList | null) => {
+    if (!files) return;
+    
+    Array.from(files).forEach(file => {
+      if (file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const result = e.target?.result as string;
+          setSelectedImages(prev => [...prev, result]);
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+  };
+
+  const removeImage = (index: number) => {
+    setSelectedImages(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    handleImageUpload(e.dataTransfer.files);
+  };
+
+  return (
+    <div className="border-t border-gray-200 bg-white p-4">
+      <form onSubmit={handleSubmit} className="space-y-3">
+        {/* Selected Images Preview */}
+        {selectedImages.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {selectedImages.map((image, index) => (
+              <div key={index} className="relative">
+                <img
+                  src={image}
+                  alt={`Selected image ${index + 1}`}
+                  className="w-16 h-16 object-cover rounded-lg"
+                />
+                <button
+                  type="button"
+                  onClick={() => removeImage(index)}
+                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600"
+                  aria-label={`Remove image ${index + 1}`}
+                >
+                  <X size={12} />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Input Area */}
+        <div
+          className={cn(
+            'flex items-end gap-2 p-3 border rounded-lg transition-colors',
+            isDragOver ? 'border-primary-500 bg-primary-50' : 'border-gray-300',
+            disabled && 'opacity-50'
+          )}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+        >
+          <div className="flex-1">
+            <textarea
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder={placeholder}
+              className="w-full resize-none border-none outline-none bg-transparent"
+              rows={1}
+              disabled={disabled}
+              aria-label="Message input"
+            />
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={(e) => handleImageUpload(e.target.files)}
+              className="hidden"
+              disabled={disabled}
+            />
+            
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={disabled}
+              aria-label="Upload image"
+            >
+              <Image size={20} />
+            </Button>
+            
+            <Button
+              type="submit"
+              size="sm"
+              disabled={disabled || (!message.trim() && selectedImages.length === 0)}
+              aria-label="Send message"
+            >
+              <Send size={20} />
+            </Button>
+          </div>
+        </div>
+        
+        {isDragOver && (
+          <div className="text-center text-sm text-primary-600">
+            Drop images here to upload
+          </div>
+        )}
+      </form>
+    </div>
+  );
+} 

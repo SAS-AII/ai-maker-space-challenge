@@ -3,11 +3,39 @@ description: When designing a frontend or frontend components.
 globs: 
 alwaysApply: false
 ---
-### Rules for Frontend
+# Frontend Chat Application Rules
 
-- You must pay attention to visual clarity and contrast. Do not place white text on a white background.
-- You must ensure the UX is pleasant. Boxes should grow to fit their contents, etc. 
-- When asking the user for sensitive information - you must use password style text-entry boxes in the UI.
-- You should use Next.js as it works best with Vercel. 
-- This frontend will ultimately be deployed on Vercel, but it should be possible to test locally. 
-- Always provide users with a way to run the created UI once you have created it.
+- **Framework & Language**: Use Next.js 14+ with TypeScript.
+- **Output Path**: Place the generated frontend code under the `frontend/` folder.
+- **Components**: React functional components with hooks.
+- **Styling**: Tailwind CSS; ensure high contrast and visual clarity.
+- **Responsive**: Mobile-first, responsive layout across devices.
+- **Accessibility**: Follow WCAG (aria-labels, keyboard navigation).
+
+- **Chat Window**
+  - Alternating message bubbles: left = user, right = assistant.
+  - Render timestamps (e.g. “10:24 AM”) under each bubble.
+  - Support inline image attachments; clicking an image opens a lightbox.
+
+- **Sidebar Chat List**
+  - Collapsible left sidebar listing chat sessions with title and creation date.
+  - “New Chat” button at top.
+  - Delete icon next to each session to remove it.
+
+- **Input Area**
+  - Text input with placeholder “Type a message…”, a Send button, and an image-upload control.
+  - Drag-and-drop image support optional.
+
+- **Settings Panel**
+  - Accessible via an icon in the header.
+  - Form fields for **Developer Prompt** and **System Prompt**.
+  - Dropdown selector for model (e.g. gpt-4.1-nano, gpt-4o-mini) styled like ChatGPT’s.
+
+- **Local & Deployment**
+  - Provide `npm run dev` for local testing.
+  - Include `vercel.json` or Next.js config for Vercel deployment.
+
+- **Project Structure**
+  - Use **app/** or **pages/** router consistently.
+  - Shared components under **components/**.
+  - Styles in **styles/** or alongside components as CSS modules.
