@@ -44,7 +44,6 @@ app.add_middleware(
 #     model: Optional[str] = "gpt-4.1-mini"  # Optional model selection with default
 #     api_key: str          # OpenAI API key for authentication
 
-client = openai.OpenAI(api_key=settings.OPENAI_API_KEY)
 logger = AppLogger(__name__).get_logger()
 
 @app.post("/api/chat")
@@ -57,6 +56,8 @@ async def chat(
     Accepts a list of messages and optional images, forwards to OpenAI with streaming,
     and proxies the chunks back to the client as a text stream.
     """
+    if not apiKey:
+        raise HTTPException(status_code=400, detail="API key is required. Please provide your OpenAI API key in the settings.")
     try:
         messages_list = json.loads(messages)
     except json.JSONDecodeError:
@@ -88,8 +89,8 @@ async def chat(
         len(images) if images else 0,
     )
 
-    # Use the provided apiKey if set, otherwise use the default
-    openai_client = openai.OpenAI(api_key=apiKey) if apiKey else client
+    # Always require user-provided apiKey
+    openai_client = openai.OpenAI(api_key=apiKey)
 
     async def generate():
         # Launch the OpenAI streaming call in a threadpool
