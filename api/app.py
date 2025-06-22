@@ -57,17 +57,19 @@ async def chat(
     and proxies the chunks back to the client as a text stream.
     """
     if not apiKey:
+        print("API key is required. Please provide your OpenAI API key in the settings.")
         raise HTTPException(status_code=400, detail="API key is required. Please provide your OpenAI API key in the settings.")
     try:
         messages_list = json.loads(messages)
-    except json.JSONDecodeError:
+    except json.JSONDecodeError as e:
+        print(f"Invalid JSON in messages field: {e}")
         raise HTTPException(status_code=400, detail="Invalid JSON in messages field")
 
     if images:
         for img in images:
             content = await img.read()
             base64_image = base64.b64encode(content).decode("utf-8")
-            
+            print(f"Processing uploaded image: {img.filename}, type: {img.content_type}")
             # Construct the user message with image content
             # OpenAI expects a specific format for this
             messages_list.append({
@@ -82,28 +84,27 @@ async def chat(
                 ]
             })
 
-    logger.info(
-        "Received chat request: model=%s, messages_count=%d, images_count=%d",
-        "gpt-4o-mini",
-        len(messages_list),
-        len(images) if images else 0,
-    )
+    print(f"Received chat request: model=gpt-4o-mini, messages_count={len(messages_list)}, images_count={len(images) if images else 0}")
 
     # Always require user-provided apiKey
     openai_client = openai.OpenAI(api_key=apiKey)
 
     async def generate():
-        # Launch the OpenAI streaming call in a threadpool
-        stream = await run_in_threadpool(
-            openai_client.chat.completions.create,
-            model="gpt-4o-mini",
-            messages=messages_list,
-            stream=True,
-        )
-        for chunk in stream:
-            delta = chunk.choices[0].delta.content
-            if delta is not None:
-                yield delta
+        try:
+            # Launch the OpenAI streaming call in a threadpool
+            stream = await run_in_threadpool(
+                openai_client.chat.completions.create,
+                model="gpt-4o-mini",
+                messages=messages_list,
+                stream=True,
+            )
+            for chunk in stream:
+                delta = chunk.choices[0].delta.content
+                if delta is not None:
+                    yield delta
+        except Exception as e:
+            print(f"Error during OpenAI streaming: {e}")
+            raise
 
     return StreamingResponse(generate(), media_type="text/plain")
 
