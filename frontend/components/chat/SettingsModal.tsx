@@ -9,6 +9,7 @@ interface SettingsModalProps {
   onClose: () => void;
   settings: Settings;
   onSave: (settings: Settings) => void;
+  message?: string;
 }
 
 export function SettingsModal({
@@ -16,6 +17,7 @@ export function SettingsModal({
   onClose,
   settings,
   onSave,
+  message = '',
 }: SettingsModalProps) {
   const [formData, setFormData] = useState<Settings>(settings);
 
@@ -71,6 +73,13 @@ export function SettingsModal({
           </Button>
         </div>
 
+        {/* Optional message */}
+        {message && (
+          <div className="px-6 pt-4 pb-2 text-red-600 dark:text-red-400 font-medium">
+            {message}
+          </div>
+        )}
+
         {/* Content */}
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           {/* Dark Theme Toggle */}
@@ -121,21 +130,22 @@ export function SettingsModal({
             rows={4}
           />
 
-          {/* API Key (optional) */}
+          {/* API Key (required) */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              ChatGPT API Key (optional)
+              ChatGPT API Key <span className="text-red-500">*</span>
             </label>
             <input
               type="password"
-              value={formData.apiKey || ''}
+              value={formData.apiKey}
               onChange={e => handleChange('apiKey', e.target.value)}
-              placeholder="Enter your OpenAI API key to override the default..."
+              placeholder="Enter your OpenAI API key to use the chat..."
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
               autoComplete="off"
+              required
             />
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              If set, this key will be used for your requests instead of the default.
+              You must set your API key to use the chat features.
             </p>
           </div>
 

@@ -27,7 +27,7 @@ export interface Settings {
   systemPrompt?: string;
   model: string;
   darkTheme: boolean;
-  apiKey?: string;
+  apiKey: string;
 }
 
 export const AVAILABLE_MODELS = [

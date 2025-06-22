@@ -17,6 +17,7 @@ const DEFAULT_SETTINGS: Settings = {
   systemPrompt: 'You are a helpful AI assistant that provides accurate and helpful responses.',
   model: 'gpt-4.1-nano',
   darkTheme: false,
+  apiKey: '',
 };
 
 export function ChatContainer() {
@@ -27,6 +28,7 @@ export function ChatContainer() {
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [settingsModalMessage, setSettingsModalMessage] = useState<string>('');
 
   // Handle responsive sidebar collapse
   useEffect(() => {
@@ -93,6 +95,11 @@ export function ChatContainer() {
   const currentSession = sessions.find(s => s.id === currentSessionId);
 
   const createNewChat = () => {
+    if (!settings.apiKey) {
+      setSettingsModalMessage('Please set your ChatGPT API key to start a new chat.');
+      setIsSettingsOpen(true);
+      return;
+    }
     const newSession: ChatSession = {
       id: generateId(),
       title: 'New Chat',
@@ -100,7 +107,6 @@ export function ChatContainer() {
       model: settings.model, // Default to global model
       messages: [],
     };
-    
     setSessions(prev => [newSession, ...prev]);
     setCurrentSessionId(newSession.id);
   };
@@ -238,6 +244,10 @@ export function ChatContainer() {
 
   const handleSaveSettings = (newSettings: Settings) => {
     setSettings(newSettings);
+    // If the modal was opened due to missing API key, close the message if key is now set
+    if (newSettings.apiKey) {
+      setSettingsModalMessage('');
+    }
   };
 
   const handleSessionModelChange = (model: string) => {
@@ -331,9 +341,10 @@ export function ChatContainer() {
       {/* Settings Modal */}
       <SettingsModal
         isOpen={isSettingsOpen}
-        onClose={() => setIsSettingsOpen(false)}
+        onClose={() => { setIsSettingsOpen(false); setSettingsModalMessage(''); }}
         settings={settings}
         onSave={handleSaveSettings}
+        message={settingsModalMessage}
       />
     </div>
   );
