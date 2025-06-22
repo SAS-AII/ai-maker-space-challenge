@@ -1,5 +1,5 @@
 # Import required FastAPI components for building the API
-from fastapi import FastAPI, HTTPException, Form, File, UploadFile
+from fastapi import FastAPI, HTTPException, Form, File, UploadFile, Request
 from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 # Import Pydantic for data validation and settings management
@@ -45,6 +45,20 @@ app.add_middleware(
 #     api_key: str          # OpenAI API key for authentication
 
 logger = AppLogger(__name__).get_logger()
+
+# Add middleware to log all incoming requests
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    print(f"Incoming request: {request.method} {request.url.path}")
+    print(f"Headers: {dict(request.headers)}")
+    try:
+        body = await request.body()
+        print(f"Body: {body.decode('utf-8', errors='replace')}")
+    except Exception as e:
+        print(f"Could not read body: {e}")
+    response = await call_next(request)
+    print(f"Response status: {response.status_code}")
+    return response
 
 @app.post("/api/chat")
 async def chat(
