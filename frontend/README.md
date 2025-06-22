@@ -12,6 +12,11 @@ A modern, responsive chat interface built with Next.js 14+ and TypeScript for in
 - **Accessibility**: WCAG-compliant with proper ARIA labels and keyboard navigation
 - **Local Storage**: Persists chat sessions and settings locally
 
+## New Features
+
+- The settings modal now allows you to enter an optional ChatGPT API key. If set, this key will be used for your requests instead of the default key configured on the backend.
+- The Developer Prompt and System Prompt fields in the settings modal are now optional.
+
 ## Prerequisites
 
 - Node.js 18+ 

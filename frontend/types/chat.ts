@@ -23,10 +23,11 @@ export interface ChatResponse {
 }
 
 export interface Settings {
-  developerPrompt: string;
-  systemPrompt: string;
+  developerPrompt?: string;
+  systemPrompt?: string;
   model: string;
   darkTheme: boolean;
+  apiKey?: string;
 }
 
 export const AVAILABLE_MODELS = [

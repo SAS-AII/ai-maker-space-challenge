@@ -110,7 +110,6 @@ export function SettingsModal({
             onChange={(e) => handleChange('developerPrompt', e.target.value)}
             placeholder="Enter the developer prompt that will be used for all conversations..."
             rows={4}
-            required
           />
 
           {/* System Prompt */}
@@ -120,8 +119,25 @@ export function SettingsModal({
             onChange={(e) => handleChange('systemPrompt', e.target.value)}
             placeholder="Enter the system prompt that defines the AI's behavior..."
             rows={4}
-            required
           />
+
+          {/* API Key (optional) */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              ChatGPT API Key (optional)
+            </label>
+            <input
+              type="password"
+              value={formData.apiKey || ''}
+              onChange={e => handleChange('apiKey', e.target.value)}
+              placeholder="Enter your OpenAI API key to override the default..."
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              autoComplete="off"
+            />
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              If set, this key will be used for your requests instead of the default.
+            </p>
+          </div>
 
           {/* Actions */}
           <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">

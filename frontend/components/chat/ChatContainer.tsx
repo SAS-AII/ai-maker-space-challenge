@@ -161,6 +161,9 @@ export function ChatContainer() {
       images.forEach(imageFile => {
         formData.append('images', imageFile);
       });
+      if (typeof settings.apiKey === 'string' && settings.apiKey) {
+        formData.append('apiKey', settings.apiKey);
+      }
 
       const stream = await sendChatMessage(formData);
 

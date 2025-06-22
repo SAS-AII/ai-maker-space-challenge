@@ -50,7 +50,8 @@ logger = AppLogger(__name__).get_logger()
 @app.post("/api/chat")
 async def chat(
     messages: str = Form(...),
-    images: Optional[List[UploadFile]] = File(None)
+    images: Optional[List[UploadFile]] = File(None),
+    apiKey: Optional[str] = Form(None)
 ):
     """
     Accepts a list of messages and optional images, forwards to OpenAI with streaming,
@@ -87,10 +88,13 @@ async def chat(
         len(images) if images else 0,
     )
 
+    # Use the provided apiKey if set, otherwise use the default
+    openai_client = openai.OpenAI(api_key=apiKey) if apiKey else client
+
     async def generate():
         # Launch the OpenAI streaming call in a threadpool
         stream = await run_in_threadpool(
-            client.chat.completions.create,
+            openai_client.chat.completions.create,
             model="gpt-4o-mini",
             messages=messages_list,
             stream=True,
