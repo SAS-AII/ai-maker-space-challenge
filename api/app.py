@@ -1,5 +1,5 @@
 # Import required FastAPI components for building the API
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Form, File, UploadFile
 from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 # Import Pydantic for data validation and settings management
@@ -8,6 +8,9 @@ from pydantic import BaseModel
 import openai
 from starlette.concurrency import run_in_threadpool
 from openai import OpenAI
+from typing import List, Optional
+import base64
+import json
 
 from core.config import settings
 from core.logger import AppLogger
@@ -44,38 +47,60 @@ app.add_middleware(
 client = openai.OpenAI(api_key=settings.OPENAI_API_KEY)
 logger = AppLogger(__name__).get_logger()
 
-# Define the main chat endpoint that handles POST requests
 @app.post("/api/chat")
-async def chat(request: ChatRequest):
+async def chat(
+    messages: str = Form(...),
+    images: Optional[List[UploadFile]] = File(None)
+):
     """
-    Accept a list of messages (system/user/assistant), forward to OpenAI with streaming,
-    and proxy the chunks back to the client as a text stream.
+    Accepts a list of messages and optional images, forwards to OpenAI with streaming,
+    and proxies the chunks back to the client as a text stream.
     """
-    # Serialize Pydantic messages to dicts
-    messages = [msg.model_dump() for msg in request.messages]
+    try:
+        messages_list = json.loads(messages)
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=400, detail="Invalid JSON in messages field")
+
+    if images:
+        for img in images:
+            content = await img.read()
+            base64_image = base64.b64encode(content).decode("utf-8")
+            
+            # Construct the user message with image content
+            # OpenAI expects a specific format for this
+            messages_list.append({
+                "role": "user",
+                "content": [
+                    {
+                        "type": "image_url",
+                        "image_url": {
+                            "url": f"data:{img.content_type};base64,{base64_image}"
+                        }
+                    }
+                ]
+            })
+
     logger.info(
-        "Received chat request (streaming): model=%s, messages=%s",
-        request.model,
-        messages,
+        "Received chat request: model=%s, messages_count=%d, images_count=%d",
+        "gpt-4o-mini",
+        len(messages_list),
+        len(images) if images else 0,
     )
 
-    async def generate():  # one-line: async generator for streaming chunks
+    async def generate():
         # Launch the OpenAI streaming call in a threadpool
         stream = await run_in_threadpool(
             client.chat.completions.create,
-            model=request.model,
-            messages=messages,
+            model="gpt-4o-mini",
+            messages=messages_list,
             stream=True,
         )
-        # Yield each chunk's new content as it arrives
         for chunk in stream:
             delta = chunk.choices[0].delta.content
             if delta is not None:
                 yield delta
 
-    # Proxy back as a text/plain streaming response
     return StreamingResponse(generate(), media_type="text/plain")
-
 
 # Define a health check endpoint to verify API status
 @app.get("/api/health")
