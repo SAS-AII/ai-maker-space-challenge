@@ -14,8 +14,9 @@ export function formatTimestamp(date: string | Date): string {
   });
 }
 
-export function formatDate(date: Date): string {
-  return date.toLocaleString();
+export function formatDate(date: string | Date): string {
+  const d = typeof date === 'string' ? new Date(date) : date;
+  return d.toLocaleString();
 }
 
 export function generateChatTitle(messages: any[]): string {

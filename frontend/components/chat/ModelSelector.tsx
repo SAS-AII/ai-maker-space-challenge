@@ -1,7 +1,7 @@
 import React from 'react';
 import { AVAILABLE_MODELS } from '@/types/chat';
 import { ChevronDown } from 'lucide-react';
-import { cn } from '../../lib/utils';
+import { cn } from '@/lib/utils';
 
 interface ModelSelectorProps {
   selectedModel: string;

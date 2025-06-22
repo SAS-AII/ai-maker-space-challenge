@@ -1,9 +1,9 @@
 import React from 'react';
 import { ChatSession } from '@/types/chat';
-import { formatDate } from '../../lib/utils';
+import { formatDate } from '@/lib/utils';
 import { Button } from '@/components/ui/Button';
 import { Plus, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
-import { cn } from '../../lib/utils';
+import { cn } from '@/lib/utils';
 
 interface ChatSidebarProps {
   sessions: ChatSession[];
@@ -112,7 +112,7 @@ export function ChatSidebar({
                           ? "text-primary-600 dark:text-primary-300"
                           : "text-gray-500 dark:text-gray-400"
                       )}>
-                        {formatDate(session.createdAt)}
+                        {formatDate(new Date(session.createdAt))}
                       </div>
                     </div>
                     <Button
