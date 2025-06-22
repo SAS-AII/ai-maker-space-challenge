@@ -153,8 +153,8 @@ export function ChatContainer() {
 
     // Prepare messages for API call
     const allMessages: Message[] = [
-      { role: 'system', content: settings.systemPrompt },
-      { role: 'user', content: settings.developerPrompt },
+      { role: 'system', content: settings.systemPrompt || '' },
+      { role: 'user', content: settings.developerPrompt || '' },
       ...currentSession?.messages || [],
       userMessage,
     ];
