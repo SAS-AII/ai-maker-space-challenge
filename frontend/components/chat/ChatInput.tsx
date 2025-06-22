@@ -71,7 +71,7 @@ export function ChatInput({
   };
 
   return (
-    <div className="border-t border-gray-200 bg-white p-4">
+    <div className="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4">
       <form onSubmit={handleSubmit} className="space-y-3">
         {/* Selected Images Preview */}
         {selectedImages.length > 0 && (
@@ -100,7 +100,7 @@ export function ChatInput({
         <div
           className={cn(
             'flex items-end gap-2 p-3 border rounded-lg transition-colors',
-            isDragOver ? 'border-primary-500 bg-primary-50' : 'border-gray-300',
+            isDragOver ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20' : 'border-gray-300 dark:border-gray-600',
             disabled && 'opacity-50'
           )}
           onDragOver={handleDragOver}
@@ -113,7 +113,7 @@ export function ChatInput({
               onChange={(e) => setMessage(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder={placeholder}
-              className="w-full resize-none border-none outline-none bg-transparent"
+              className="w-full resize-none border-none outline-none bg-transparent text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
               rows={1}
               disabled={disabled}
               aria-label="Message input"
@@ -138,6 +138,7 @@ export function ChatInput({
               onClick={() => fileInputRef.current?.click()}
               disabled={disabled}
               aria-label="Upload image"
+              className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
             >
               <Image size={20} />
             </Button>
@@ -154,7 +155,7 @@ export function ChatInput({
         </div>
         
         {isDragOver && (
-          <div className="text-center text-sm text-primary-600">
+          <div className="text-center text-sm text-primary-600 dark:text-primary-400">
             Drop images here to upload
           </div>
         )}

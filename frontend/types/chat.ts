@@ -25,6 +25,7 @@ export interface Settings {
   developerPrompt: string;
   systemPrompt: string;
   model: string;
+  darkTheme: boolean;
 }
 
 export const AVAILABLE_MODELS = [

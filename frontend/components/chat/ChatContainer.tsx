@@ -6,6 +6,7 @@ import { ChatSidebar } from './ChatSidebar';
 import { ChatMessage } from './ChatMessage';
 import { ChatInput } from './ChatInput';
 import { SettingsModal } from './SettingsModal';
+import { ModelSelector } from './ModelSelector';
 import { sendChatMessage } from '@/lib/api';
 import { generateId, generateChatTitle } from '@/lib/utils';
 import { Settings as SettingsIcon } from 'lucide-react';
@@ -15,6 +16,7 @@ const DEFAULT_SETTINGS: Settings = {
   developerPrompt: 'You are a helpful AI assistant.',
   systemPrompt: 'You are a helpful AI assistant that provides accurate and helpful responses.',
   model: 'gpt-4.1-nano',
+  darkTheme: false,
 };
 
 export function ChatContainer() {
@@ -41,7 +43,12 @@ export function ChatContainer() {
     }
     
     if (savedSettings) {
-      setSettings(JSON.parse(savedSettings));
+      const parsedSettings = JSON.parse(savedSettings);
+      setSettings(parsedSettings);
+      // Apply dark theme immediately
+      if (parsedSettings.darkTheme) {
+        document.documentElement.classList.add('dark');
+      }
     }
   }, []);
 
@@ -54,6 +61,15 @@ export function ChatContainer() {
   useEffect(() => {
     localStorage.setItem('chat-settings', JSON.stringify(settings));
   }, [settings]);
+
+  // Apply dark theme when settings change
+  useEffect(() => {
+    if (settings.darkTheme) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [settings.darkTheme]);
 
   // Auto-scroll to bottom when new messages are added
   useEffect(() => {
@@ -195,8 +211,12 @@ export function ChatContainer() {
     setSettings(newSettings);
   };
 
+  const handleModelChange = (model: string) => {
+    setSettings(prev => ({ ...prev, model }));
+  };
+
   return (
-    <div className="h-screen flex bg-white">
+    <div className="h-screen flex bg-white dark:bg-gray-900">
       {/* Sidebar */}
       <ChatSidebar
         sessions={sessions}
@@ -211,49 +231,66 @@ export function ChatContainer() {
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col">
         {/* Header */}
-        <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-          <h1 className="text-xl font-semibold text-gray-900">
+        <div className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <ModelSelector
+              selectedModel={settings.model}
+              onModelChange={handleModelChange}
+            />
+          </div>
+          
+          <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100 flex-1 text-center">
             {currentSession?.title || 'AI Chat'}
           </h1>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setIsSettingsOpen(true)}
-            aria-label="Open settings"
-          >
-            <SettingsIcon size={20} />
-          </Button>
+          
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsSettingsOpen(true)}
+              aria-label="Open settings"
+              className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
+            >
+              <SettingsIcon size={20} />
+            </Button>
+          </div>
         </div>
 
-        {/* Messages Area */}
-        <div className="flex-1 overflow-y-auto p-6">
-          {currentSession ? (
-            <div className="space-y-4">
-              {currentSession.messages.map((message, index) => (
-                <ChatMessage
-                  key={index}
-                  message={message}
-                  isTyping={isTyping && index === currentSession.messages.length - 1 && message.role === 'assistant'}
-                />
-              ))}
-              <div ref={messagesEndRef} />
-            </div>
-          ) : (
-            <div className="flex items-center justify-center h-full text-gray-500">
-              <div className="text-center">
-                <h3 className="text-lg font-medium mb-2">Welcome to AI Chat</h3>
-                <p className="text-sm">Start a new conversation to begin chatting with the AI.</p>
+        {/* Messages Area - Centered with max width like ChatGPT */}
+        <div className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-800">
+          <div className="max-w-4xl mx-auto p-6">
+            {currentSession ? (
+              <div className="space-y-4">
+                {currentSession.messages.map((message, index) => (
+                  <ChatMessage
+                    key={index}
+                    message={message}
+                    isTyping={isTyping && index === currentSession.messages.length - 1 && message.role === 'assistant'}
+                  />
+                ))}
+                <div ref={messagesEndRef} />
               </div>
-            </div>
-          )}
+            ) : (
+              <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
+                <div className="text-center">
+                  <h3 className="text-lg font-medium mb-2">Welcome to AI Chat</h3>
+                  <p className="text-sm">Start a new conversation to begin chatting with the AI.</p>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Input Area */}
+        {/* Input Area - Centered with max width */}
         {currentSession && (
-          <ChatInput
-            onSendMessage={handleSendMessage}
-            disabled={isTyping}
-          />
+          <div className="bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
+            <div className="max-w-4xl mx-auto">
+              <ChatInput
+                onSendMessage={handleSendMessage}
+                disabled={isTyping}
+              />
+            </div>
+          </div>
         )}
       </div>
 

@@ -27,20 +27,21 @@ export function ChatSidebar({
   return (
     <div
       className={cn(
-        'bg-gray-50 border-r border-gray-200 transition-all duration-300 flex flex-col',
+        'bg-gray-50 dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 transition-all duration-300 flex flex-col',
         isCollapsed ? 'w-16' : 'w-80'
       )}
     >
       {/* Header */}
-      <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+      <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
         {!isCollapsed && (
-          <h2 className="text-lg font-semibold text-gray-900">Chats</h2>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Chats</h2>
         )}
         <Button
           variant="ghost"
           size="sm"
           onClick={onToggleCollapse}
           aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
         >
           {isCollapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
         </Button>
@@ -70,7 +71,7 @@ export function ChatSidebar({
       {/* Chat Sessions List */}
       <div className="flex-1 overflow-y-auto">
         {sessions.length === 0 ? (
-          <div className="p-4 text-center text-gray-500">
+          <div className="p-4 text-center text-gray-500 dark:text-gray-400">
             {!isCollapsed && "No chats yet. Start a new conversation!"}
           </div>
         ) : (
@@ -80,7 +81,7 @@ export function ChatSidebar({
                 key={session.id}
                 className={cn(
                   'sidebar-item group',
-                  currentSessionId === session.id && 'bg-primary-50 border-primary-200',
+                  currentSessionId === session.id && 'bg-primary-50 dark:bg-primary-900/20 border-primary-200 dark:border-primary-700',
                   isCollapsed && 'justify-center p-2'
                 )}
                 onClick={() => onSelectSession(session.id)}
@@ -97,10 +98,10 @@ export function ChatSidebar({
                 {!isCollapsed ? (
                   <>
                     <div className="flex-1 min-w-0">
-                      <div className="font-medium text-gray-900 truncate">
+                      <div className="font-medium text-gray-900 dark:text-gray-100 truncate">
                         {session.title}
                       </div>
-                      <div className="text-xs text-gray-500">
+                      <div className="text-xs text-gray-500 dark:text-gray-400">
                         {formatDate(session.createdAt)}
                       </div>
                     </div>
@@ -111,15 +112,15 @@ export function ChatSidebar({
                         e.stopPropagation();
                         onDeleteSession(session.id);
                       }}
-                      className="opacity-0 group-hover:opacity-100 transition-opacity"
+                      className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
                       aria-label={`Delete chat: ${session.title}`}
                     >
                       <Trash2 size={16} />
                     </Button>
                   </>
                 ) : (
-                  <div className="w-8 h-8 bg-primary-100 rounded-lg flex items-center justify-center">
-                    <span className="text-xs font-medium text-primary-700">
+                  <div className="w-8 h-8 bg-primary-100 dark:bg-primary-900 rounded-lg flex items-center justify-center">
+                    <span className="text-xs font-medium text-primary-700 dark:text-primary-300">
                       {session.title.charAt(0).toUpperCase()}
                     </span>
                   </div>

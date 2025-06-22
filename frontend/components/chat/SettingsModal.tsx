@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
-import { Settings, AVAILABLE_MODELS } from '@/types/chat';
+import { Settings } from '@/types/chat';
 import { Button } from '@/components/ui/Button';
 import { Textarea } from '@/components/ui/Textarea';
-import { Select } from '@/components/ui/Select';
 import { X } from 'lucide-react';
 
 interface SettingsModalProps {
@@ -26,16 +25,11 @@ export function SettingsModal({
     onClose();
   };
 
-  const handleChange = (field: keyof Settings, value: string) => {
+  const handleChange = (field: keyof Settings, value: string | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
   if (!isOpen) return null;
-
-  const modelOptions = AVAILABLE_MODELS.map(model => ({
-    value: model,
-    label: model,
-  }));
 
   return (
     <div
@@ -46,14 +40,14 @@ export function SettingsModal({
       aria-labelledby="settings-modal-title"
     >
       <div
-        className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto"
+        className="bg-white dark:bg-gray-900 rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
           <h2
             id="settings-modal-title"
-            className="text-xl font-semibold text-gray-900"
+            className="text-xl font-semibold text-gray-900 dark:text-gray-100"
           >
             Settings
           </h2>
@@ -62,6 +56,7 @@ export function SettingsModal({
             size="sm"
             onClick={onClose}
             aria-label="Close settings"
+            className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
           >
             <X size={20} />
           </Button>
@@ -69,14 +64,35 @@ export function SettingsModal({
 
         {/* Content */}
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          {/* Model Selection */}
-          <Select
-            label="Model"
-            value={formData.model}
-            onChange={(e) => handleChange('model', e.target.value)}
-            options={modelOptions}
-            required
-          />
+          {/* Dark Theme Toggle */}
+          <div className="flex items-center justify-between">
+            <div>
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Dark Theme
+              </label>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                Switch between light and dark appearance
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => handleChange('darkTheme', !formData.darkTheme)}
+              className={`
+                relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900
+                ${formData.darkTheme ? 'bg-primary-600' : 'bg-gray-200 dark:bg-gray-700'}
+              `}
+              role="switch"
+              aria-checked={formData.darkTheme}
+              aria-label="Toggle dark theme"
+            >
+              <span
+                className={`
+                  inline-block h-4 w-4 transform rounded-full bg-white transition-transform
+                  ${formData.darkTheme ? 'translate-x-6' : 'translate-x-1'}
+                `}
+              />
+            </button>
+          </div>
 
           {/* Developer Prompt */}
           <Textarea
@@ -99,7 +115,7 @@ export function SettingsModal({
           />
 
           {/* Actions */}
-          <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
+          <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
             <Button
               type="button"
               variant="secondary"
