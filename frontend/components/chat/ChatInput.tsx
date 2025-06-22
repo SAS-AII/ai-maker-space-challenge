@@ -1,10 +1,10 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Send, Image, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface ChatInputProps {
-  onSendMessage: (content: string, images?: string[]) => void;
+  onSendMessage: (content: string, images: File[]) => void;
   disabled?: boolean;
   placeholder?: string;
 }
@@ -15,16 +15,25 @@ export function ChatInput({
   placeholder = "Type a message..." 
 }: ChatInputProps) {
   const [message, setMessage] = useState('');
-  const [selectedImages, setSelectedImages] = useState<string[]>([]);
+  const [selectedImages, setSelectedImages] = useState<File[]>([]);
+  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Clean up object URLs to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      previewUrls.forEach(url => URL.revokeObjectURL(url));
+    };
+  }, [previewUrls]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (message.trim() || selectedImages.length > 0) {
-      onSendMessage(message.trim(), selectedImages.length > 0 ? selectedImages : undefined);
+      onSendMessage(message.trim(), selectedImages);
       setMessage('');
       setSelectedImages([]);
+      setPreviewUrls([]);
     }
   };
 
@@ -37,21 +46,17 @@ export function ChatInput({
 
   const handleImageUpload = (files: FileList | null) => {
     if (!files) return;
-    
-    Array.from(files).forEach(file => {
-      if (file.type.startsWith('image/')) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          const result = e.target?.result as string;
-          setSelectedImages(prev => [...prev, result]);
-        };
-        reader.readAsDataURL(file);
-      }
-    });
+    const newFiles = Array.from(files);
+    setSelectedImages(prev => [...prev, ...newFiles]);
+    const newPreviewUrls = newFiles.map(file => URL.createObjectURL(file));
+    setPreviewUrls(prev => [...prev, ...newPreviewUrls]);
   };
 
   const removeImage = (index: number) => {
     setSelectedImages(prev => prev.filter((_, i) => i !== index));
+    const urlToRemove = previewUrls[index];
+    URL.revokeObjectURL(urlToRemove);
+    setPreviewUrls(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -71,15 +76,15 @@ export function ChatInput({
   };
 
   return (
-    <div className="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4">
+    <div className="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-2 sm:p-4">
       <form onSubmit={handleSubmit} className="space-y-3">
         {/* Selected Images Preview */}
-        {selectedImages.length > 0 && (
+        {previewUrls.length > 0 && (
           <div className="flex flex-wrap gap-2">
-            {selectedImages.map((image, index) => (
-              <div key={index} className="relative">
+            {previewUrls.map((url, index) => (
+              <div key={url} className="relative">
                 <img
-                  src={image}
+                  src={url}
                   alt={`Selected image ${index + 1}`}
                   className="w-16 h-16 object-cover rounded-lg"
                 />
@@ -113,14 +118,14 @@ export function ChatInput({
               onChange={(e) => setMessage(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder={placeholder}
-              className="w-full resize-none border-none outline-none bg-transparent text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+              className="w-full resize-none border-none outline-none bg-transparent text-sm sm:text-base text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
               rows={1}
               disabled={disabled}
               aria-label="Message input"
             />
           </div>
           
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2">
             <input
               ref={fileInputRef}
               type="file"
@@ -134,22 +139,23 @@ export function ChatInput({
             <Button
               type="button"
               variant="ghost"
-              size="sm"
+              size="lg"
               onClick={() => fileInputRef.current?.click()}
               disabled={disabled}
               aria-label="Upload image"
-              className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
+              className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 w-11 h-11 p-0"
             >
-              <Image size={20} />
+              <Image size={24} />
             </Button>
             
             <Button
               type="submit"
-              size="sm"
+              size="lg"
               disabled={disabled || (!message.trim() && selectedImages.length === 0)}
               aria-label="Send message"
+              className="w-11 h-11 p-0"
             >
-              <Send size={20} />
+              <Send size={24} />
             </Button>
           </div>
         </div>

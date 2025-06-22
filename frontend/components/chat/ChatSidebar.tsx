@@ -98,10 +98,20 @@ export function ChatSidebar({
                 {!isCollapsed ? (
                   <>
                     <div className="flex-1 min-w-0">
-                      <div className="font-medium text-gray-900 dark:text-gray-100 truncate">
+                      <div className={cn(
+                        "font-medium truncate",
+                        currentSessionId === session.id 
+                          ? "text-primary-700 dark:text-primary-200" 
+                          : "text-gray-900 dark:text-gray-100"
+                      )}>
                         {session.title}
                       </div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400">
+                      <div className={cn(
+                        "text-xs",
+                        currentSessionId === session.id 
+                          ? "text-primary-600 dark:text-primary-300"
+                          : "text-gray-500 dark:text-gray-400"
+                      )}>
                         {formatDate(session.createdAt)}
                       </div>
                     </div>

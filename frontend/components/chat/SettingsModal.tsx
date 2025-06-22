@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Settings } from '@/types/chat';
 import { Button } from '@/components/ui/Button';
 import { Textarea } from '@/components/ui/Textarea';
@@ -19,6 +19,10 @@ export function SettingsModal({
 }: SettingsModalProps) {
   const [formData, setFormData] = useState<Settings>(settings);
 
+  useEffect(() => {
+    setFormData(settings);
+  }, [settings]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSave(formData);
@@ -26,7 +30,12 @@ export function SettingsModal({
   };
 
   const handleChange = (field: keyof Settings, value: string | boolean) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    const newFormData = { ...formData, [field]: value };
+    setFormData(newFormData);
+    // Immediately save theme changes without closing the modal
+    if (field === 'darkTheme') {
+      onSave(newFormData);
+    }
   };
 
   if (!isOpen) return null;
@@ -124,7 +133,7 @@ export function SettingsModal({
               Cancel
             </Button>
             <Button type="submit">
-              Save Settings
+              Save & Close
             </Button>
           </div>
         </form>

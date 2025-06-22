@@ -39,7 +39,7 @@ export function ChatMessage({ message, isTyping = false }: ChatMessageProps) {
               isUser ? 'chat-bubble-user' : 'chat-bubble-assistant'
             )}
           >
-            <div className="break-words">
+            <div className="whitespace-pre-wrap break-words">
               {message.content}
               {isTyping && (
                 <span className="inline-block ml-1 animate-typing">...</span>
