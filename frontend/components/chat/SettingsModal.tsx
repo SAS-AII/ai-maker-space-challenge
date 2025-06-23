@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Settings } from '@/types/chat';
 import { Button } from '@/components/ui/Button';
 import { Textarea } from '@/components/ui/Textarea';
-import { X } from 'lucide-react';
+import { X, Check, Loader2 } from 'lucide-react';
+import { validateApiKey } from '@/lib/api';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -20,13 +21,51 @@ export function SettingsModal({
   message = '',
 }: SettingsModalProps) {
   const [formData, setFormData] = useState<Settings>(settings);
+  const [apiKeyStatus, setApiKeyStatus] = useState<'idle' | 'checking' | 'valid' | 'invalid' | 'format'>('idle');
+  const [apiKeyError, setApiKeyError] = useState<string>('');
 
   useEffect(() => {
     setFormData(settings);
   }, [settings]);
 
+  // Validate API key format (starts with sk- and is 48+ chars)
+  function isApiKeyFormatValid(key: string) {
+    return /^sk-[A-Za-z0-9]{48,}$/.test(key);
+  }
+
+  // Validate API key when it changes
+  useEffect(() => {
+    if (!formData.apiKey) {
+      setApiKeyStatus('idle');
+      setApiKeyError('');
+      return;
+    }
+    if (!isApiKeyFormatValid(formData.apiKey)) {
+      setApiKeyStatus('format');
+      setApiKeyError('API key format is invalid.');
+      return;
+    }
+    setApiKeyStatus('checking');
+    setApiKeyError('');
+    validateApiKey(formData.apiKey)
+      .then(res => {
+        if (res.valid) {
+          setApiKeyStatus('valid');
+          setApiKeyError('');
+        } else {
+          setApiKeyStatus('invalid');
+          setApiKeyError(res.error || 'API key is invalid.');
+        }
+      })
+      .catch(() => {
+        setApiKeyStatus('invalid');
+        setApiKeyError('Could not validate API key.');
+      });
+  }, [formData.apiKey]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (apiKeyStatus !== 'valid') return;
     onSave(formData);
     onClose();
   };
@@ -140,10 +179,19 @@ export function SettingsModal({
               value={formData.apiKey}
               onChange={e => handleChange('apiKey', e.target.value)}
               placeholder="Enter your OpenAI API key to use the chat..."
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500 pr-10"
               autoComplete="off"
               required
             />
+            <span className="absolute right-3 top-2.5">
+              {apiKeyStatus === 'checking' && <Loader2 className="animate-spin text-gray-400" size={18} />}
+              {apiKeyStatus === 'valid' && <Check className="text-green-500" size={18} />}
+              {apiKeyStatus === 'invalid' && <X className="text-red-500" size={18} />}
+              {apiKeyStatus === 'format' && <X className="text-yellow-500" size={18} />}
+            </span>
+            {apiKeyError && (
+              <p className="text-xs text-red-500 mt-1">{apiKeyError}</p>
+            )}
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
               You must set your API key to use the chat features.
             </p>
@@ -158,7 +206,7 @@ export function SettingsModal({
             >
               Cancel
             </Button>
-            <Button type="submit">
+            <Button type="submit" disabled={apiKeyStatus !== 'valid'}>
               Save & Close
             </Button>
           </div>

@@ -35,4 +35,13 @@ export async function sendMessage(formData: FormData) {
     throw new Error('Failed to send message');
   }
   return response.json();
+}
+
+export async function validateApiKey(apiKey: string): Promise<{ valid: boolean; error?: string }> {
+  const response = await fetch(`${API_BASE_URL}/api/validate-key`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ apiKey }),
+  });
+  return response.json();
 } 

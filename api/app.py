@@ -1,5 +1,5 @@
 # Import required FastAPI components for building the API
-from fastapi import FastAPI, HTTPException, Form, File, UploadFile, Request
+from fastapi import FastAPI, HTTPException, Form, File, UploadFile, Request, Body
 from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 # Import Pydantic for data validation and settings management
@@ -121,6 +121,22 @@ async def chat(
             raise
 
     return StreamingResponse(generate(), media_type="text/plain")
+
+@app.post("/api/validate-key")
+async def validate_key(apiKey: str = Body(..., embed=True)):
+    """
+    Validates an OpenAI API key by making a minimal harmless API call.
+    Returns { valid: true } if the key is valid, otherwise { valid: false, error: ... }
+    """
+    try:
+        openai_client = openai.OpenAI(api_key=apiKey)
+        # Minimal harmless call: list models
+        await run_in_threadpool(openai_client.models.list)
+        return {"valid": True}
+    except openai.AuthenticationError:
+        return {"valid": False, "error": "Invalid API key."}
+    except Exception as e:
+        return {"valid": False, "error": str(e)}
 
 # Define a health check endpoint to verify API status
 @app.get("/api/health")
