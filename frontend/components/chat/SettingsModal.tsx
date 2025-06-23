@@ -171,20 +171,22 @@ export function SettingsModal({
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               ChatGPT API Key <span className="text-red-500">*</span>
             </label>
-            <input
-              type="password"
-              value={formData.apiKey}
-              onChange={e => handleChange('apiKey', e.target.value)}
-              placeholder="Enter your OpenAI API key to use the chat..."
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500 pr-10"
-              autoComplete="off"
-              required
-            />
-            <span className="absolute right-3 top-2.5">
-              {apiKeyStatus === 'checking' && <Loader2 className="animate-spin text-gray-400" size={18} />}
-              {apiKeyStatus === 'valid' && <Check className="text-green-500" size={18} />}
-              {apiKeyStatus === 'invalid' && <X className="text-red-500" size={18} />}
-            </span>
+            <div className="relative">
+              <input
+                type="password"
+                value={formData.apiKey}
+                onChange={e => handleChange('apiKey', e.target.value)}
+                placeholder="Enter your OpenAI API key to use the chat..."
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500 pr-10"
+                autoComplete="off"
+                required
+              />
+              <span className="absolute right-3 top-2.5">
+                {apiKeyStatus === 'checking' && <Loader2 className="animate-spin text-gray-400" size={18} />}
+                {apiKeyStatus === 'valid' && <Check className="text-green-500" size={18} />}
+                {apiKeyStatus === 'invalid' && <X className="text-red-500" size={18} />}
+              </span>
+            </div>
             {apiKeyError && (
               <p className="text-xs text-red-500 mt-1">{apiKeyError}</p>
             )}
