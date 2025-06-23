@@ -24,6 +24,7 @@ export function SettingsModal({
   const [apiKeyStatus, setApiKeyStatus] = useState<'idle' | 'checking' | 'valid' | 'invalid'>('idle');
   const [apiKeyError, setApiKeyError] = useState<string>('');
   const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
+  const [dotCount, setDotCount] = useState(0);
 
   useEffect(() => {
     setFormData(settings);
@@ -59,6 +60,18 @@ export function SettingsModal({
       if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
     };
   }, [formData.apiKey]);
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (apiKeyStatus === 'checking') {
+      interval = setInterval(() => {
+        setDotCount((prev) => (prev + 1) % 4);
+      }, 400);
+    } else {
+      setDotCount(0);
+    }
+    return () => clearInterval(interval);
+  }, [apiKeyStatus]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -175,6 +188,7 @@ export function SettingsModal({
                 type="password"
                 value={formData.apiKey}
                 onChange={e => handleChange('apiKey', e.target.value)}
+                onPaste={e => handleChange('apiKey', e.clipboardData.getData('text'))}
                 placeholder="Enter your OpenAI API key to use the chat..."
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500 pr-10"
                 autoComplete="off"
@@ -188,6 +202,9 @@ export function SettingsModal({
             </div>
             {apiKeyError && (
               <p className="text-xs text-red-500 mt-1">{apiKeyError}</p>
+            )}
+            {apiKeyStatus === 'checking' && (
+              <p className="text-xs text-blue-500 mt-1">Validating your API key{'.'.repeat(dotCount)}</p>
             )}
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
               You must set your API key to use the chat features.
