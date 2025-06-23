@@ -177,7 +177,7 @@ export function ChatContainer() {
         formData.delete('apiKey');
       }
       if (typeof settings.apiKey === 'string' && settings.apiKey) {
-        formData.append('apiKey', settings.apiKey);
+        formData.set('apiKey', settings.apiKey);
       }
 
       const stream = await sendChatMessage(formData);
