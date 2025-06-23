@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Settings } from '@/types/chat';
 import { Button } from '@/components/ui/Button';
 import { Textarea } from '@/components/ui/Textarea';
@@ -23,6 +23,7 @@ export function SettingsModal({
   const [formData, setFormData] = useState<Settings>(settings);
   const [apiKeyStatus, setApiKeyStatus] = useState<'idle' | 'checking' | 'valid' | 'invalid'>('idle');
   const [apiKeyError, setApiKeyError] = useState<string>('');
+  const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     setFormData(settings);
@@ -35,22 +36,28 @@ export function SettingsModal({
       setApiKeyError('');
       return;
     }
-    setApiKeyStatus('checking');
-    setApiKeyError('');
-    validateApiKey(formData.apiKey)
-      .then(res => {
-        if (res.valid) {
-          setApiKeyStatus('valid');
-          setApiKeyError('');
-        } else {
+    if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
+    debounceTimeout.current = setTimeout(() => {
+      setApiKeyStatus('checking');
+      setApiKeyError('');
+      validateApiKey(formData.apiKey)
+        .then(res => {
+          if (res.valid) {
+            setApiKeyStatus('valid');
+            setApiKeyError('');
+          } else {
+            setApiKeyStatus('invalid');
+            setApiKeyError(res.error || 'API key is invalid.');
+          }
+        })
+        .catch(() => {
           setApiKeyStatus('invalid');
-          setApiKeyError(res.error || 'API key is invalid.');
-        }
-      })
-      .catch(() => {
-        setApiKeyStatus('invalid');
-        setApiKeyError('Could not validate API key.');
-      });
+          setApiKeyError('Could not validate API key.');
+        });
+    }, 500);
+    return () => {
+      if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
+    };
   }, [formData.apiKey]);
 
   const handleSubmit = (e: React.FormEvent) => {
