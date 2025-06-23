@@ -62,7 +62,6 @@ export function SettingsModal({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (apiKeyStatus !== 'valid') return;
     onSave(formData);
     onClose();
   };
