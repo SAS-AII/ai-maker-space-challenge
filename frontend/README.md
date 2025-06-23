@@ -34,7 +34,8 @@ A modern, responsive chat interface built with Next.js 14+ and TypeScript for in
 2. **Set up environment variables** (optional):
    Create a `.env.local` file in the frontend directory:
    ```bash
-   NEXT_PUBLIC_API_URL=http://localhost:8000
+   NEXT_PUBLIC_API_URL=http://localhost:8000 # For local dev
+   # For production, set this to your deployed API URL, e.g. https://your-vercel-app.vercel.app
    ```
 
 3. **Start the development server**:
@@ -94,7 +95,7 @@ frontend/
    - Vercel will automatically detect Next.js and configure the build
 
 3. **Set environment variables** in Vercel dashboard:
-   - `NEXT_PUBLIC_API_URL` - Your production API URL
+   - `NEXT_PUBLIC_API_URL` - Your production API URL (e.g. https://your-vercel-app.vercel.app)
 
 4. **Deploy**: Vercel will automatically deploy on every push to main branch
 
@@ -112,18 +113,7 @@ frontend/
 
 ### Environment Configuration
 
-For production deployment, update the `vercel.json` file with your actual backend URL:
-
-```json
-{
-  "rewrites": [
-    {
-      "source": "/api/:path*",
-      "destination": "https://your-backend-url.com/api/:path*"
-    }
-  ]
-}
-```
+For production deployment, update the `vercel.json` file with your actual backend URL or set the environment variable `NEXT_PUBLIC_API_URL` in Vercel dashboard.
 
 ## API Integration
 

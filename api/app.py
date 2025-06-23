@@ -17,14 +17,8 @@ from core.logger import AppLogger
 
 from schemas.openai_schemas import ChatRequest, ChatResponse
 
-# Import the router from the testing_developer_usage_route module
-from api.routes.openai.testing_developer_usage_route import router as testing_developer_usage_router
-
 # Initialize FastAPI application with a title
 app = FastAPI(title="OpenAI Chat API")
-
-# Include the testing_developer_usage_router in the app
-app.include_router(testing_developer_usage_router)
 
 # Configure CORS (Cross-Origin Resource Sharing) middleware
 # This allows the API to be accessed from different domains/originsP
