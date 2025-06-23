@@ -28,21 +28,11 @@ export function SettingsModal({
     setFormData(settings);
   }, [settings]);
 
-  // Validate API key format (starts with sk- and is 48+ chars)
-  function isApiKeyFormatValid(key: string) {
-    return /^sk-[A-Za-z0-9]{48,}$/.test(key);
-  }
-
   // Validate API key when it changes
   useEffect(() => {
     if (!formData.apiKey) {
       setApiKeyStatus('idle');
       setApiKeyError('');
-      return;
-    }
-    if (!isApiKeyFormatValid(formData.apiKey)) {
-      setApiKeyStatus('format');
-      setApiKeyError('API key format is invalid.');
       return;
     }
     setApiKeyStatus('checking');
