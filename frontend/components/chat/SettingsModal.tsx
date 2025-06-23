@@ -195,7 +195,7 @@ export function SettingsModal({
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={apiKeyStatus !== 'valid'}>
+            <Button type="submit">
               Save & Close
             </Button>
           </div>
