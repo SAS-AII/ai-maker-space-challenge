@@ -21,7 +21,7 @@ export function SettingsModal({
   message = '',
 }: SettingsModalProps) {
   const [formData, setFormData] = useState<Settings>(settings);
-  const [apiKeyStatus, setApiKeyStatus] = useState<'idle' | 'checking' | 'valid' | 'invalid' | 'format'>('idle');
+  const [apiKeyStatus, setApiKeyStatus] = useState<'idle' | 'checking' | 'valid' | 'invalid'>('idle');
   const [apiKeyError, setApiKeyError] = useState<string>('');
 
   useEffect(() => {
@@ -177,7 +177,6 @@ export function SettingsModal({
               {apiKeyStatus === 'checking' && <Loader2 className="animate-spin text-gray-400" size={18} />}
               {apiKeyStatus === 'valid' && <Check className="text-green-500" size={18} />}
               {apiKeyStatus === 'invalid' && <X className="text-red-500" size={18} />}
-              {apiKeyStatus === 'format' && <X className="text-yellow-500" size={18} />}
             </span>
             {apiKeyError && (
               <p className="text-xs text-red-500 mt-1">{apiKeyError}</p>
