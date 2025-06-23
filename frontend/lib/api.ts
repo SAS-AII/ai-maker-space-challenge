@@ -43,5 +43,17 @@ export async function validateApiKey(apiKey: string): Promise<{ valid: boolean; 
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ apiKey }),
   });
-  return response.json();
+
+  let data;
+  try {
+    data = await response.json();
+  } catch {
+    data = {};
+  }
+
+  if (!response.ok) {
+    return { valid: false, error: data.error || 'Could not validate API key.' };
+  }
+
+  return data;
 } 

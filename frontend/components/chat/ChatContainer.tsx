@@ -172,6 +172,10 @@ export function ChatContainer() {
       images.forEach(imageFile => {
         formData.append('images', imageFile);
       });
+      // Remove duplicate apiKey append if present
+      if (formData.has('apiKey')) {
+        formData.delete('apiKey');
+      }
       if (typeof settings.apiKey === 'string' && settings.apiKey) {
         formData.append('apiKey', settings.apiKey);
       }
