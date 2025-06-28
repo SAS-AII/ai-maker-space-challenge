@@ -550,7 +550,7 @@ export function ChatContainer() {
                       How can I help you today?
                     </h2>
                     <p className="text-gray-600 dark:text-gray-400">
-                      Ask me anything, and I'll do my best to assist you.
+                      Ask me anything, and I&apos;ll do my best to assist you.
                     </p>
                   </div>
                   
@@ -587,7 +587,7 @@ export function ChatContainer() {
                     How can I help you today?
                   </h2>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Ask me anything, and I'll do my best to assist you.
+                    Ask me anything, and I&apos;ll do my best to assist you.
                   </p>
                 </div>
               )}

@@ -88,7 +88,7 @@ export function MarkdownRenderer({ content, className }: MarkdownRendererProps) 
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         components={{
-          code({ node, inline, className, children, ...props }) {
+          code({ inline, className, children, ...props }) {
             const match = /language-(\w+)/.exec(className || '');
             // Treat truly inline or language-less code as inline span
             if (inline || !match) {
@@ -139,7 +139,7 @@ export function MarkdownRenderer({ content, className }: MarkdownRendererProps) 
               Array.isArray(children) &&
               children.length === 1 &&
               React.isValidElement(children[0]) &&
-              (children[0] as any).type === 'code'
+              (children[0] as React.ReactElement).type === 'code'
             ) {
               return <span {...props}>{children}</span>;
             }
