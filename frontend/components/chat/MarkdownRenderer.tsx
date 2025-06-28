@@ -5,7 +5,8 @@ import rehypeHighlight from 'rehype-highlight';
 import { cn } from '@/lib/utils';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import { useTheme } from '../ThemeProvider';
+import { Copy, Check } from 'lucide-react';
+import { useState } from 'react';
 
 interface MarkdownRendererProps {
   content: string;
@@ -32,6 +33,33 @@ const customGray = {
     display: 'block',
   },
 };
+
+function CopyButton({ text, className = '' }: { text: string; className?: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <button
+      type="button"
+      aria-label="Copy code"
+      className={cn('p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors', className)}
+      onClick={async (e) => {
+        e.preventDefault();
+        try {
+          await navigator.clipboard.writeText(text);
+          setCopied(true);
+          setTimeout(() => setCopied(false), 1200);
+        } catch (err) {
+          console.error('Clipboard copy failed', err);
+        }
+      }}
+    >
+      {copied ? (
+        <Check size={16} className="text-green-600" />
+      ) : (
+        <Copy size={16} />
+      )}
+    </button>
+  );
+}
 
 export function MarkdownRenderer({ content, className }: MarkdownRendererProps) {
   return (
@@ -74,14 +102,21 @@ export function MarkdownRenderer({ content, className }: MarkdownRendererProps) 
                 </code>
               );
             }
-            // Block code: render with syntax highlighting and language label
+            // Block code: render with syntax highlighting, language label (top-right), and copy button
             return (
-              <div className="relative my-4">
+              <div className="relative my-4 group">
+                {/* Language label */}
                 {match && (
-                  <span className="absolute top-2 left-3 text-xs text-gray-500 uppercase tracking-wide select-none z-10">
+                  <span className="absolute top-2 right-12 text-xs text-gray-500 uppercase tracking-wide select-none z-10">
                     {match[1]}
                   </span>
                 )}
+                {/* Copy button */}
+                <CopyButton
+                  text={String(children)}
+                  className="absolute top-1.5 right-3 opacity-0 group-hover:opacity-100"
+                />
+
                 <div className={CODE_BLOCK_BG + ' rounded-lg p-4 overflow-x-auto'}>
                   <SyntaxHighlighter
                     style={customGray}
