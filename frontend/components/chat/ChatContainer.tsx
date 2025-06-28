@@ -36,6 +36,7 @@ export function ChatContainer() {
   const [isDragging, setIsDragging] = useState(false);
   const chatBodyRef = useRef<HTMLDivElement>(null);
   const dragCounter = useRef(0);
+  const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
 
   // Handle responsive sidebar collapse
   useEffect(() => {
@@ -81,10 +82,25 @@ export function ChatContainer() {
     localStorage.setItem('chat-settings', JSON.stringify(settings));
   }, [settings]);
 
-  // Auto-scroll to bottom when new messages are added
+  // Track user scroll position to control auto-scroll
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [sessions, currentSessionId]);
+    const chatBody = chatBodyRef.current;
+    if (!chatBody) return;
+    const handleScroll = () => {
+      // If user is within 100px of the bottom, enable auto-scroll
+      const { scrollTop, scrollHeight, clientHeight } = chatBody;
+      setShouldAutoScroll(scrollTop + clientHeight >= scrollHeight - 100);
+    };
+    chatBody.addEventListener('scroll', handleScroll);
+    return () => chatBody.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Auto-scroll to bottom when new messages are added, but only if shouldAutoScroll is true
+  useEffect(() => {
+    if (shouldAutoScroll) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [sessions, currentSessionId, shouldAutoScroll]);
 
   // Clean up object URLs to prevent memory leaks
   useEffect(() => {

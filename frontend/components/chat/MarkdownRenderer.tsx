@@ -3,17 +3,41 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
 import { cn } from '@/lib/utils';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { useTheme } from '../ThemeProvider';
 
 interface MarkdownRendererProps {
   content: string;
   className?: string;
 }
 
+const CODE_BLOCK_BG = 'bg-gray-100 dark:bg-gray-800';
+const INLINE_CODE_BG = 'bg-gray-200 dark:bg-gray-700';
+
+// Custom style: remove all per-line and inner backgrounds
+const customGray = {
+  ...oneDark,
+  'pre[class*="language-"]': {
+    background: 'transparent',
+    borderRadius: '0.75rem',
+    margin: 0,
+    padding: 0,
+  },
+  'code[class*="language-"]': {
+    background: 'transparent',
+  },
+  'span.line': {
+    background: 'transparent',
+    display: 'block',
+  },
+};
+
 export function MarkdownRenderer({ content, className }: MarkdownRendererProps) {
   return (
     <div
       className={cn(
-        'prose prose-sm max-w-none dark:prose-invert',
+        'prose prose-base sm:prose-lg max-w-none dark:prose-invert',
         'prose-headings:font-semibold prose-headings:text-gray-900 dark:prose-headings:text-gray-100',
         'prose-h1:text-2xl prose-h1:mb-4 prose-h1:mt-6',
         'prose-h2:text-xl prose-h2:mb-3 prose-h2:mt-5',
@@ -35,18 +59,37 @@ export function MarkdownRenderer({ content, className }: MarkdownRendererProps) 
     >
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
-        rehypePlugins={[rehypeHighlight]}
         components={{
           code({ node, inline, className, children, ...props }) {
             const match = /language-(\w+)/.exec(className || '');
-            return !inline && match ? (
-              <pre className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg overflow-x-auto border border-gray-200 dark:border-gray-700">
-                <code className={className} {...props}>
-                  {children}
-                </code>
-              </pre>
-            ) : (
-              <code className="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded text-sm" {...props}>
+            const lang = match ? match[1] : undefined;
+            if (!inline) {
+              // Code block: single gray background, language label at top-left
+              return (
+                <div className={`my-4 relative rounded-lg ${CODE_BLOCK_BG} p-0`}>
+                  {lang && (
+                    <span className="absolute top-2 left-4 text-xs font-mono text-gray-400 select-none">
+                      {lang}
+                    </span>
+                  )}
+                  <div className="pt-7 px-4 pb-4 overflow-x-auto">
+                    <SyntaxHighlighter
+                      language={lang}
+                      style={customGray}
+                      PreTag="div"
+                      customStyle={{ background: 'transparent', borderRadius: '0.75rem', margin: 0, padding: 0, fontSize: '1em' }}
+                      codeTagProps={{ className: 'text-sm sm:text-base bg-transparent' }}
+                      showLineNumbers={false}
+                    >
+                      {String(children).replace(/\n$/, '')}
+                    </SyntaxHighlighter>
+                  </div>
+                </div>
+              );
+            }
+            // Inline code: render in a small, rounded gray span that fits the word
+            return (
+              <code className={`inline-block align-middle ${INLINE_CODE_BG} px-2 py-0.5 rounded text-xs sm:text-sm font-mono`} {...props}>
                 {children}
               </code>
             );
