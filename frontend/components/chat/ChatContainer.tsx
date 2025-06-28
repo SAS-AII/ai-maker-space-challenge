@@ -154,6 +154,10 @@ export function ChatContainer() {
       setIsSettingsOpen(true);
       return;
     }
+    // Prevent creating a new chat if the current chat is empty
+    if (currentSession && (!currentSession.messages || currentSession.messages.length === 0)) {
+      return;
+    }
     const newSession: ChatSession = {
       id: generateId(),
       title: 'New Chat',
