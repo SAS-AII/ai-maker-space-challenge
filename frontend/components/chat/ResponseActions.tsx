@@ -72,17 +72,23 @@ export function ResponseActions({ onRetry, currentModel, onModelChange, prompt }
 
     const rect = buttonRef.current.getBoundingClientRect();
     const dropdownWidth = 224; // w-56 => 14rem => 224px
-    const gap = 8; // same as mb-2
+    const gap = 8; // distance between button and dropdown
 
-    // Decide placement: prefer above (like ChatGPT) but if not enough space, place below.
+    // Space calculations for vertical placement
     const spaceAbove = rect.top;
     const spaceBelow = window.innerHeight - rect.bottom;
-    const preferredHeight = 300; // approximate dropdown height
+    const preferredHeight = 300; // rough expected dropdown height
 
-    const placeAbove = spaceAbove >= preferredHeight || spaceAbove >= spaceBelow;
+    const placeAbove = spaceAbove >= preferredHeight && spaceAbove > spaceBelow;
 
     const top = placeAbove ? rect.top - gap : rect.bottom + gap;
-    const left = Math.max(8, rect.right - dropdownWidth); // ensure at least 8px from viewport left
+
+    // Horizontal placement – try to align left edges, fallback to right align & clamp in viewport
+    let left = rect.left; // default align to button left edge
+    if (left + dropdownWidth > window.innerWidth - 8) {
+      left = rect.right - dropdownWidth; // align right edges
+    }
+    left = Math.max(8, left); // keep at least 8px from viewport left
 
     setDropdownStyles({
       position: 'fixed',
@@ -91,6 +97,59 @@ export function ResponseActions({ onRetry, currentModel, onModelChange, prompt }
       width: dropdownWidth,
       zIndex: 9999,
     });
+  }, [open]);
+
+  // Continuously track position while dropdown is open to handle streaming content height changes.
+  React.useEffect(() => {
+    if (!open) return;
+
+    let rafId: number;
+
+    const updateLoop = () => {
+      // Re-calculate every frame while open to follow the button as the message grows.
+      if (buttonRef.current) {
+        const rect = buttonRef.current.getBoundingClientRect();
+        const dropdownWidth = 224;
+        const gap = 8;
+        const spaceAbove = rect.top;
+        const spaceBelow = window.innerHeight - rect.bottom;
+        const preferredHeight = 300;
+        const placeAbove = spaceAbove >= preferredHeight && spaceAbove > spaceBelow;
+        const top = placeAbove ? rect.top - gap : rect.bottom + gap;
+        let left = rect.left;
+        if (left + dropdownWidth > window.innerWidth - 8) {
+          left = rect.right - dropdownWidth;
+        }
+        left = Math.max(8, left);
+
+        setDropdownStyles(prev => {
+          // Only update when needed to avoid unnecessary re-renders
+          if (
+            prev.top !== Math.round(top) ||
+            prev.left !== Math.round(left)
+          ) {
+            return { ...prev, top: Math.round(top), left: Math.round(left) };
+          }
+          return prev;
+        });
+      }
+      rafId = requestAnimationFrame(updateLoop);
+    };
+
+    rafId = requestAnimationFrame(updateLoop);
+
+    // Also adjust on window resize for completeness
+    const handleResize = () => {
+      if (!buttonRef.current) return;
+      // Let loop handle updates – just one immediate recalculation to avoid lag.
+      updateLoop();
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      cancelAnimationFrame(rafId);
+      window.removeEventListener('resize', handleResize);
+    };
   }, [open]);
 
   const handleModelSelect = (model: string) => {

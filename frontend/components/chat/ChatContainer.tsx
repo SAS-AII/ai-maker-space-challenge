@@ -35,11 +35,26 @@ export function ChatContainer() {
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const chatBodyRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
   const dragCounter = useRef(0);
   const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
   const [pendingMessage, setPendingMessage] = useState<string>('');
   const [pendingImagesForRetry, setPendingImagesForRetry] = useState<File[]>([]);
-  const lastScrollTimeRef = useRef(0);
+
+  // --- Smooth but throttled scroll helpers ---------------------------------
+  // Instead of performing a smooth scroll **on every token**, we debounce the
+  // scroll action. This dramatically reduces the number of scroll animations
+  // triggered while the assistant streams its answer, eliminating the
+  // "tremble" effect caused by repeated smooth-scroll resets.
+
+  const scrollToBottomImmediate = () => {
+    const el = scrollRef.current;
+    if (!el) return;
+    // Use an *instant* scroll. Using `behavior: 'smooth'` repeatedly causes the
+    // browser to restart the animation each time, which is the root cause of
+    // the jitter.
+    el.scrollTop = el.scrollHeight;
+  };
 
   // Handle responsive sidebar collapse
   useEffect(() => {
@@ -87,30 +102,59 @@ export function ChatContainer() {
 
   // Track user scroll position to control auto-scroll
   useEffect(() => {
-    const chatBody = chatBodyRef.current;
-    if (!chatBody) return;
+    const el = scrollRef.current;
+    if (!el) return;
     const handleScroll = () => {
       // If user is within 100px of the bottom, enable auto-scroll
-      const { scrollTop, scrollHeight, clientHeight } = chatBody;
+      const { scrollTop, scrollHeight, clientHeight } = el;
       setShouldAutoScroll(scrollTop + clientHeight >= scrollHeight - 100);
     };
-    chatBody.addEventListener('scroll', handleScroll);
-    return () => chatBody.removeEventListener('scroll', handleScroll);
+    el.addEventListener('scroll', handleScroll);
+    return () => el.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Auto-scroll to bottom when new messages are added, but only if shouldAutoScroll is true.
-  // Throttle the scroll to at most once every 100ms to prevent jitter during token streaming.
-  useEffect(() => {
-    if (!shouldAutoScroll) return;
+  // ---------------------------------------------------------------------------
+  // Mutation-observer + rAF based auto-scroll
+  // ---------------------------------------------------------------------------
+  // The goal is to *continuously* follow the streamed content while the user is
+  // at (or near) the bottom, without starting/stopping native smooth-scroll
+  // animations. We do this by:
+  //  1. Watching DOM mutations inside the scroll container (new tokens).
+  //  2. If the user hasn't scrolled away (`shouldAutoScroll === true`), flag
+  //     that we need to scroll.
+  //  3. A single rAF loop performs the scroll once per frame when flagged.
 
-    const now = Date.now();
-    if (now - lastScrollTimeRef.current < 100) {
-      // Too soon since the last scroll – skip to avoid excessive scrolling.
-      return;
-    }
-    lastScrollTimeRef.current = now;
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [sessions, currentSessionId, shouldAutoScroll]);
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+
+    // Flag we toggle when new mutations arrive.
+    let needsScroll = false;
+
+    // Observe DOM changes (tokens appended).
+    const observer = new MutationObserver(() => {
+      if (shouldAutoScroll) {
+        needsScroll = true;
+      }
+    });
+    observer.observe(el, { childList: true, subtree: true });
+
+    // rAF loop to perform the actual scroll.
+    let rafId: number;
+    const loop = () => {
+      if (needsScroll) {
+        needsScroll = false;
+        scrollToBottomImmediate();
+      }
+      rafId = requestAnimationFrame(loop);
+    };
+    rafId = requestAnimationFrame(loop);
+
+    return () => {
+      observer.disconnect();
+      cancelAnimationFrame(rafId);
+    };
+  }, [shouldAutoScroll]);
 
   // Clean up object URLs to prevent memory leaks
   useEffect(() => {
@@ -459,7 +503,7 @@ export function ChatContainer() {
         </div>
 
         {/* Chat Messages Area */}
-        <div className="flex-1 overflow-y-auto">
+        <div ref={scrollRef} className="flex-1 overflow-y-auto">
           <div className="max-w-4xl mx-auto p-4 md:p-6">
             {/* Error Banner */}
             <ErrorBanner onRetry={handleRetryLastPrompt} lastPrompt={lastPrompt} />
