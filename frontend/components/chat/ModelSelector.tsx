@@ -54,7 +54,7 @@ export function ModelSelector({
           <div className="absolute top-full left-0 mt-1 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg z-20">
             <ul role="listbox" className="py-1">
               {AVAILABLE_MODELS.map((model) => (
-                <li key={model} role="option">
+                <li key={model} role="option" aria-selected={selectedModel === model}>
                   <button
                     onClick={() => handleModelSelect(model)}
                     className={cn(

@@ -12,7 +12,6 @@ interface ChatMessageProps {
 export function ChatMessage({ message, isTyping = false }: ChatMessageProps) {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const isUser = message.role === 'user';
-  const isAssistant = message.role === 'assistant';
 
   const handleImageClick = (imageUrl: string) => {
     setSelectedImage(imageUrl);

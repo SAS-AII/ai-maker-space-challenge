@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/Button';
 import { Textarea } from '@/components/ui/Textarea';
 import { X, Check, Loader2 } from 'lucide-react';
 import { validateApiKey } from '@/lib/api';
+import { useTheme } from '../ThemeProvider';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -25,6 +26,7 @@ export function SettingsModal({
   const [apiKeyError, setApiKeyError] = useState<string>('');
   const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
   const [dotCount, setDotCount] = useState(0);
+  const { theme, setTheme } = useTheme();
 
   useEffect(() => {
     setFormData(settings);
@@ -82,10 +84,11 @@ export function SettingsModal({
   const handleChange = (field: keyof Settings, value: string | boolean) => {
     const newFormData = { ...formData, [field]: value };
     setFormData(newFormData);
-    // Immediately save theme changes without closing the modal
-    if (field === 'darkTheme') {
-      onSave(newFormData);
-    }
+  };
+
+  const handleThemeToggle = () => {
+    const newTheme = theme === 'light' ? 'dark' : 'light';
+    setTheme(newTheme);
   };
 
   if (!isOpen) return null;
@@ -142,19 +145,19 @@ export function SettingsModal({
             </div>
             <button
               type="button"
-              onClick={() => handleChange('darkTheme', !formData.darkTheme)}
+              onClick={handleThemeToggle}
               className={`
                 relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900
-                ${formData.darkTheme ? 'bg-primary-600' : 'bg-gray-200 dark:bg-gray-700'}
+                ${theme === 'dark' ? 'bg-primary-600' : 'bg-gray-200 dark:bg-gray-700'}
               `}
               role="switch"
-              aria-checked={formData.darkTheme}
+              aria-checked={theme === 'dark'}
               aria-label="Toggle dark theme"
             >
               <span
                 className={`
                   inline-block h-4 w-4 transform rounded-full bg-white transition-transform
-                  ${formData.darkTheme ? 'translate-x-6' : 'translate-x-1'}
+                  ${theme === 'dark' ? 'translate-x-6' : 'translate-x-1'}
                 `}
               />
             </button>

@@ -1,5 +1,6 @@
 import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import type { Message } from '@/types/chat';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -19,7 +20,7 @@ export function formatDate(date: string | Date): string {
   return d.toLocaleString();
 }
 
-export function generateChatTitle(messages: any[]): string {
+export function generateChatTitle(messages: Message[]): string {
   const userMessages = messages.filter(msg => msg.role === 'user');
   if (userMessages.length === 0) return 'New Chat';
   

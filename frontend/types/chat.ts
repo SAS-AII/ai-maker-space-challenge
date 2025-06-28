@@ -26,7 +26,6 @@ export interface Settings {
   developerPrompt?: string;
   systemPrompt?: string;
   model: string;
-  darkTheme: boolean;
   apiKey: string;
 }
 

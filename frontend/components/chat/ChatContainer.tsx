@@ -7,16 +7,17 @@ import { ChatMessage } from './ChatMessage';
 import { ChatInput } from './ChatInput';
 import { SettingsModal } from './SettingsModal';
 import { ModelSelector } from './ModelSelector';
+import { ThemeToggle } from '@/components/ThemeToggle';
+import { ErrorBanner } from './ErrorBanner';
 import { sendChatMessage } from '@/lib/api';
 import { generateId, generateChatTitle } from '@/lib/utils';
-import { Settings as SettingsIcon } from 'lucide-react';
+import { Settings as SettingsIcon, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 
 const DEFAULT_SETTINGS: Settings = {
   developerPrompt: 'You are a helpful AI assistant.',
   systemPrompt: 'You are a helpful AI assistant that provides accurate and helpful responses.',
   model: 'gpt-4.1-nano',
-  darkTheme: false,
   apiKey: '',
 };
 
@@ -29,6 +30,7 @@ export function ChatContainer() {
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [settingsModalMessage, setSettingsModalMessage] = useState<string>('');
+  const [lastPrompt, setLastPrompt] = useState<string>('');
 
   // Handle responsive sidebar collapse
   useEffect(() => {
@@ -59,10 +61,6 @@ export function ChatContainer() {
     if (savedSettings) {
       const parsedSettings = JSON.parse(savedSettings);
       setSettings(parsedSettings);
-      // Apply dark theme immediately
-      if (parsedSettings.darkTheme) {
-        document.documentElement.classList.add('dark');
-      }
     }
   }, []);
 
@@ -77,15 +75,6 @@ export function ChatContainer() {
   useEffect(() => {
     localStorage.setItem('chat-settings', JSON.stringify(settings));
   }, [settings]);
-
-  // Apply dark theme when settings change
-  useEffect(() => {
-    if (settings.darkTheme) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [settings.darkTheme]);
 
   // Auto-scroll to bottom when new messages are added
   useEffect(() => {
@@ -128,6 +117,9 @@ export function ChatContainer() {
       setIsSettingsOpen(true);
       return;
     }
+
+    // Store the prompt for potential retry
+    setLastPrompt(content);
 
     const imagePreviews = images.map(file => URL.createObjectURL(file));
 
@@ -251,6 +243,12 @@ export function ChatContainer() {
     }
   };
 
+  const handleRetryLastPrompt = () => {
+    if (lastPrompt) {
+      handleSendMessage(lastPrompt, []);
+    }
+  };
+
   const handleSaveSettings = (newSettings: Settings) => {
     setSettings(newSettings);
     // If the modal was opened due to missing API key, close the message if key is now set
@@ -284,19 +282,35 @@ export function ChatContainer() {
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col">
         {/* Header */}
-        <div className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-4 sm:px-6 py-4 flex items-center justify-between">
+        <div className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-4 sm:px-6 py-4 flex items-center justify-between relative">
+          {/* Left side - Hamburger and Model Selector */}
           <div className="flex items-center gap-2 sm:gap-4">
-            <ModelSelector
-              selectedModel={currentSession?.model || settings.model}
-              onModelChange={handleSessionModelChange}
-            />
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+              aria-label="Toggle sidebar"
+              className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 sm:hidden"
+            >
+              <Menu size={20} />
+            </Button>
+            {/* Model Selector - Hidden on mobile */}
+            <div className="hidden md:block">
+              <ModelSelector
+                selectedModel={currentSession?.model || settings.model}
+                onModelChange={handleSessionModelChange}
+              />
+            </div>
           </div>
           
-          <h1 className="text-base sm:text-xl font-semibold text-gray-900 dark:text-gray-100 flex-1 text-center truncate px-2">
+          {/* Center - Title */}
+          <h1 className="absolute left-1/2 -translate-x-1/2 text-base sm:text-xl font-semibold text-gray-900 dark:text-gray-100 truncate px-2 max-w-[200px] sm:max-w-[300px]">
             {currentSession?.title || 'AI Chat'}
           </h1>
           
+          {/* Right side - Settings and Theme Toggle */}
           <div className="flex items-center gap-2">
+            <ThemeToggle />
             <Button
               variant="ghost"
               size="sm"
@@ -311,7 +325,10 @@ export function ChatContainer() {
 
         {/* Messages Area - Centered with max width like ChatGPT */}
         <div className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-800">
-          <div className="max-w-4xl mx-auto p-4 sm:p-6">
+          <div className="max-w-4xl mx-auto p-4 md:p-6">
+            {/* Error Banner */}
+            <ErrorBanner onRetry={handleRetryLastPrompt} lastPrompt={lastPrompt} />
+            
             {currentSession ? (
               <div className="space-y-4">
                 {currentSession.messages.map((message, index) => (
@@ -337,10 +354,12 @@ export function ChatContainer() {
         {/* Input Area - Centered with max width */}
         {currentSession && (
           <div className="bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
-            <div className="max-w-4xl mx-auto px-2 sm:px-0">
+            <div className="max-w-4xl mx-auto px-4 md:px-6">
               <ChatInput
                 onSendMessage={handleSendMessage}
                 disabled={isTyping}
+                selectedModel={currentSession.model || settings.model}
+                onModelChange={handleSessionModelChange}
               />
             </div>
           </div>

@@ -2,17 +2,22 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Send, Image, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { MobilePreferences } from './MobilePreferences';
 
 interface ChatInputProps {
   onSendMessage: (content: string, images: File[]) => void;
   disabled?: boolean;
   placeholder?: string;
+  selectedModel?: string;
+  onModelChange?: (model: string) => void;
 }
 
 export function ChatInput({ 
   onSendMessage, 
   disabled = false, 
-  placeholder = "Type a message..." 
+  placeholder = "Type a message...",
+  selectedModel,
+  onModelChange
 }: ChatInputProps) {
   const [message, setMessage] = useState('');
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
@@ -76,7 +81,7 @@ export function ChatInput({
   };
 
   return (
-    <div className="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-2 sm:p-4">
+    <div className="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4">
       <form onSubmit={handleSubmit} className="space-y-3">
         {/* Selected Images Preview */}
         {previewUrls.length > 0 && (
@@ -91,7 +96,7 @@ export function ChatInput({
                 <button
                   type="button"
                   onClick={() => removeImage(index)}
-                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600"
+                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600 transition-colors"
                   aria-label={`Remove image ${index + 1}`}
                 >
                   <X size={12} />
@@ -118,14 +123,14 @@ export function ChatInput({
               onChange={(e) => setMessage(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder={placeholder}
-              className="w-full resize-none border-none outline-none bg-transparent text-sm sm:text-base text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+              className="w-full resize-none border-none outline-none bg-transparent text-sm sm:text-base text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 min-h-[48px]"
               rows={1}
               disabled={disabled}
               aria-label="Message input"
             />
           </div>
           
-          <div className="flex items-center gap-1 sm:gap-2">
+          <div className="flex items-center gap-2">
             <input
               ref={fileInputRef}
               type="file"
@@ -139,23 +144,34 @@ export function ChatInput({
             <Button
               type="button"
               variant="ghost"
-              size="lg"
+              size="sm"
               onClick={() => fileInputRef.current?.click()}
               disabled={disabled}
               aria-label="Upload image"
-              className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 w-11 h-11 p-0"
+              className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
             >
-              <Image size={24} />
+              <Image size={20} className="sm:mr-2" />
+              <span className="hidden sm:inline">Image</span>
             </Button>
+            
+            {/* Mobile Preferences Button */}
+            {selectedModel && onModelChange && (
+              <div className="md:hidden">
+                <MobilePreferences
+                  selectedModel={selectedModel}
+                  onModelChange={onModelChange}
+                />
+              </div>
+            )}
             
             <Button
               type="submit"
-              size="lg"
+              size="sm"
               disabled={disabled || (!message.trim() && selectedImages.length === 0)}
               aria-label="Send message"
-              className="w-11 h-11 p-0"
             >
-              <Send size={24} />
+              <Send size={20} className="sm:mr-2" />
+              <span className="hidden sm:inline">Send</span>
             </Button>
           </div>
         </div>
