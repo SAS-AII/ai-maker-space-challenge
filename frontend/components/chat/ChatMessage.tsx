@@ -34,7 +34,14 @@ export function ChatMessage({ message, isTyping = false }: ChatMessageProps) {
         <div className="flex flex-col max-w-[80%]">
           {/* Images above the chat bubble, not inside */}
           {message.images && message.images.length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-2">
+            <div
+              className={cn(
+                // Mobile: grid with 2 per row for user, flex for assistant
+                isUser
+                  ? 'grid grid-cols-2 gap-2 mb-2 md:flex md:flex-wrap md:justify-end'
+                  : 'flex flex-wrap justify-start gap-2 mb-2'
+              )}
+            >
               {message.images.map((imageUrl, index) => (
                 <div key={index} className="relative">
                   <img
@@ -66,7 +73,10 @@ export function ChatMessage({ message, isTyping = false }: ChatMessageProps) {
               )}
             </div>
           </div>
-          <span className="text-xs text-gray-500 mt-1">
+          <span className={cn(
+            'text-xs text-gray-500 mt-1 block',
+            isUser ? 'text-right' : 'text-left'
+          )}>
             {message.timestamp ? formatTimestamp(message.timestamp) : formatTimestamp(new Date())}
           </span>
         </div>

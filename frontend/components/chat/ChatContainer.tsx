@@ -31,6 +31,11 @@ export function ChatContainer() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [settingsModalMessage, setSettingsModalMessage] = useState<string>('');
   const [lastPrompt, setLastPrompt] = useState<string>('');
+  const [selectedImages, setSelectedImages] = useState<File[]>([]);
+  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
+  const [isDragging, setIsDragging] = useState(false);
+  const chatBodyRef = useRef<HTMLDivElement>(null);
+  const dragCounter = useRef(0);
 
   // Handle responsive sidebar collapse
   useEffect(() => {
@@ -80,6 +85,66 @@ export function ChatContainer() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [sessions, currentSessionId]);
+
+  // Clean up object URLs to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      previewUrls.forEach(url => URL.revokeObjectURL(url));
+    };
+  }, [previewUrls]);
+
+  // Drag and drop overlay logic
+  useEffect(() => {
+    const chatBody = chatBodyRef.current;
+    if (!chatBody) return;
+
+    const handleDragEnter = (e: DragEvent) => {
+      e.preventDefault();
+      dragCounter.current += 1;
+      setIsDragging(true);
+    };
+    const handleDragLeave = (e: DragEvent) => {
+      e.preventDefault();
+      dragCounter.current = Math.max(0, dragCounter.current - 1);
+      if (dragCounter.current === 0) setIsDragging(false);
+    };
+    const handleDragOver = (e: DragEvent) => {
+      e.preventDefault();
+      setIsDragging(true);
+    };
+    const handleDrop = (e: DragEvent) => {
+      e.preventDefault();
+      setIsDragging(false);
+      dragCounter.current = 0;
+      const files = e.dataTransfer?.files;
+      if (!files) return;
+      const newFiles = Array.from(files);
+      setSelectedImages(prev => [...prev, ...newFiles]);
+      const newPreviewUrls = newFiles.map(file => URL.createObjectURL(file));
+      setPreviewUrls(prev => [...prev, ...newPreviewUrls]);
+    };
+
+    chatBody.addEventListener('dragenter', handleDragEnter);
+    chatBody.addEventListener('dragleave', handleDragLeave);
+    chatBody.addEventListener('dragover', handleDragOver);
+    chatBody.addEventListener('drop', handleDrop);
+
+    // Prevent browser from opening files anywhere (sidebar, etc)
+    const preventDefault = (e: DragEvent) => {
+      e.preventDefault();
+    };
+    window.addEventListener('dragover', preventDefault);
+    window.addEventListener('drop', preventDefault);
+
+    return () => {
+      chatBody.removeEventListener('dragenter', handleDragEnter);
+      chatBody.removeEventListener('dragleave', handleDragLeave);
+      chatBody.removeEventListener('dragover', handleDragOver);
+      chatBody.removeEventListener('drop', handleDrop);
+      window.removeEventListener('dragover', preventDefault);
+      window.removeEventListener('drop', preventDefault);
+    };
+  }, []);
 
   const currentSession = sessions.find(s => s.id === currentSessionId);
 
@@ -266,6 +331,20 @@ export function ChatContainer() {
     );
   };
 
+  const handleImageUpload = (files: FileList | null) => {
+    if (!files) return;
+    const newFiles = Array.from(files);
+    setSelectedImages(prev => [...prev, ...newFiles]);
+    const newPreviewUrls = newFiles.map(file => URL.createObjectURL(file));
+    setPreviewUrls(prev => [...prev, ...newPreviewUrls]);
+  };
+  const removeImage = (index: number) => {
+    setSelectedImages(prev => prev.filter((_, i) => i !== index));
+    const urlToRemove = previewUrls[index];
+    URL.revokeObjectURL(urlToRemove);
+    setPreviewUrls(prev => prev.filter((_, i) => i !== index));
+  };
+
   return (
     <div className="h-screen flex bg-white dark:bg-gray-900">
       {/* Sidebar */}
@@ -278,9 +357,17 @@ export function ChatContainer() {
         onNewChat={createNewChat}
         onDeleteSession={deleteSession}
       />
-
       {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col">
+      <div ref={chatBodyRef} className="flex-1 flex flex-col relative">
+        {/* Drag overlay */}
+        {isDragging && (
+          <div className="absolute inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/30 select-none pointer-events-auto">
+            <div className="text-center">
+              <div className="text-lg font-semibold text-white mb-2">Add Files</div>
+              <div className="text-base text-white">Drop any file here to add to the conversation</div>
+            </div>
+          </div>
+        )}
         {/* Header */}
         <div className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-4 sm:px-6 py-4 flex items-center justify-between relative">
           {/* Left side - Hamburger and Model Selector */}
@@ -356,6 +443,10 @@ export function ChatContainer() {
               disabled={isTyping}
               selectedModel={currentSession.model || settings.model}
               onModelChange={handleSessionModelChange}
+              selectedImages={selectedImages}
+              previewUrls={previewUrls}
+              onImageUpload={handleImageUpload}
+              onRemoveImage={removeImage}
             />
             {/* Disclaimer text - only on larger screens */}
             <div className="hidden md:block mt-4 text-center">

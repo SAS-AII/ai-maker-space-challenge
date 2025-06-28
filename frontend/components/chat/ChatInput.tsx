@@ -10,6 +10,10 @@ interface ChatInputProps {
   placeholder?: string;
   selectedModel?: string;
   onModelChange?: (model: string) => void;
+  selectedImages?: File[];
+  previewUrls?: string[];
+  onImageUpload?: (files: FileList | null) => void;
+  onRemoveImage?: (index: number) => void;
 }
 
 export function ChatInput({ 
@@ -17,28 +21,21 @@ export function ChatInput({
   disabled = false, 
   placeholder = "Ask me anything...",
   selectedModel,
-  onModelChange
+  onModelChange,
+  selectedImages = [],
+  previewUrls = [],
+  onImageUpload,
+  onRemoveImage
 }: ChatInputProps) {
   const [message, setMessage] = useState('');
-  const [selectedImages, setSelectedImages] = useState<File[]>([]);
-  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
-  const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // Clean up object URLs to prevent memory leaks
-  useEffect(() => {
-    return () => {
-      previewUrls.forEach(url => URL.revokeObjectURL(url));
-    };
-  }, [previewUrls]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (message.trim() || selectedImages.length > 0) {
       onSendMessage(message.trim(), selectedImages);
       setMessage('');
-      setSelectedImages([]);
-      setPreviewUrls([]);
+      if (onImageUpload) onImageUpload(null); // clear images after send
     }
   };
 
@@ -49,68 +46,30 @@ export function ChatInput({
     }
   };
 
-  const handleImageUpload = (files: FileList | null) => {
-    if (!files) return;
-    const newFiles = Array.from(files);
-    setSelectedImages(prev => [...prev, ...newFiles]);
-    const newPreviewUrls = newFiles.map(file => URL.createObjectURL(file));
-    setPreviewUrls(prev => [...prev, ...newPreviewUrls]);
-  };
-
-  const removeImage = (index: number) => {
-    setSelectedImages(prev => prev.filter((_, i) => i !== index));
-    const urlToRemove = previewUrls[index];
-    URL.revokeObjectURL(urlToRemove);
-    setPreviewUrls(prev => prev.filter((_, i) => i !== index));
-  };
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragOver(true);
-  };
-
-  const handleDragLeave = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragOver(false);
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragOver(false);
-    handleImageUpload(e.dataTransfer.files);
-  };
-
   return (
     <div className="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4">
       <form onSubmit={handleSubmit} className="space-y-3">
         {/* Selected Images Preview */}
         {previewUrls.length > 0 && (
-          <div className="flex flex-wrap gap-2 mb-2 w-full justify-end">
-            {previewUrls.map((url, index) => {
-              // Calculate size based on count
-              const count = previewUrls.length;
-              let size = 'w-12 h-12'; // default 48px
-              if (count > 5 && count <= 10) size = 'w-9 h-9'; // 36px
-              else if (count > 10) size = 'w-7 h-7'; // 28px
-              return (
-                <div key={url} className="relative">
-                  <img
-                    src={url}
-                    alt={`Selected image ${index + 1}`}
-                    className={`object-cover rounded-lg ${size}`}
-                    style={{ maxWidth: '100%', maxHeight: '100%' }}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => removeImage(index)}
-                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600 transition-colors"
-                    aria-label={`Remove image ${index + 1}`}
-                  >
-                    <X size={12} />
-                  </button>
-                </div>
-              );
-            })}
+          <div className="flex flex-row gap-2 mb-2 w-full">
+            {previewUrls.map((url, index) => (
+              <div key={url} className="relative">
+                <img
+                  src={url}
+                  alt={`Selected image ${index + 1}`}
+                  className="object-cover rounded-lg"
+                  style={{ width: '64px', height: '64px', maxWidth: '100%', maxHeight: '100%' }}
+                />
+                <button
+                  type="button"
+                  onClick={() => onRemoveImage && onRemoveImage(index)}
+                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600 transition-colors"
+                  aria-label={`Remove image ${index + 1}`}
+                >
+                  <X size={12} />
+                </button>
+              </div>
+            ))}
           </div>
         )}
 
@@ -118,12 +77,8 @@ export function ChatInput({
         <div
           className={cn(
             'flex items-end gap-2 p-3 border rounded-lg transition-colors',
-            isDragOver ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20' : 'border-gray-300 dark:border-gray-600',
             disabled && 'opacity-50'
           )}
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onDrop={handleDrop}
         >
           <div className="flex-1">
             <textarea
@@ -144,7 +99,7 @@ export function ChatInput({
               type="file"
               accept="image/*"
               multiple
-              onChange={(e) => handleImageUpload(e.target.files)}
+              onChange={(e) => onImageUpload && onImageUpload(e.target.files)}
               className="hidden"
               disabled={disabled}
             />
@@ -183,12 +138,6 @@ export function ChatInput({
             </Button>
           </div>
         </div>
-        
-        {isDragOver && (
-          <div className="text-center text-sm text-primary-600 dark:text-primary-400">
-            Drop images here to upload
-          </div>
-        )}
       </form>
     </div>
   );
