@@ -37,7 +37,7 @@ export function MarkdownRenderer({ content, className }: MarkdownRendererProps) 
   return (
     <div
       className={cn(
-        'prose prose-base sm:prose-lg max-w-none dark:prose-invert',
+        'prose prose-base sm:prose-base md:prose-base lg:prose-base max-w-none dark:prose-invert',
         'prose-headings:font-semibold prose-headings:text-gray-900 dark:prose-headings:text-gray-100',
         'prose-h1:text-2xl prose-h1:mb-4 prose-h1:mt-6',
         'prose-h2:text-xl prose-h2:mb-3 prose-h2:mt-5',
@@ -62,44 +62,52 @@ export function MarkdownRenderer({ content, className }: MarkdownRendererProps) 
         components={{
           code({ node, inline, className, children, ...props }) {
             const match = /language-(\w+)/.exec(className || '');
-            const lang = match ? match[1] : undefined;
-            if (!inline) {
-              // Code block: single gray background, language label at top-left
+            if (inline) {
+              // Inline code: render as inline <code> with minimal styling
               return (
-                <div className={`my-4 relative rounded-lg ${CODE_BLOCK_BG} p-0`}>
-                  {lang && (
-                    <span className="absolute top-2 left-4 text-xs font-mono text-gray-400 select-none">
-                      {lang}
-                    </span>
-                  )}
-                  <div className="pt-7 px-4 pb-4 overflow-x-auto">
-                    <SyntaxHighlighter
-                      language={lang}
-                      style={customGray}
-                      PreTag="div"
-                      customStyle={{ background: 'transparent', borderRadius: '0.75rem', margin: 0, padding: 0, fontSize: '1em' }}
-                      codeTagProps={{ className: 'text-sm sm:text-base bg-transparent' }}
-                      showLineNumbers={false}
-                    >
-                      {String(children).replace(/\n$/, '')}
-                    </SyntaxHighlighter>
-                  </div>
-                </div>
+                <code
+                  className={INLINE_CODE_BG + ' rounded px-1 text-sm font-mono'}
+                  style={{ display: 'inline', fontSize: '0.95em', verticalAlign: 'baseline' }}
+                  {...props}
+                >
+                  {children}
+                </code>
               );
             }
-            // Inline code: render in a small, rounded gray span that fits the word
+            // Block code: render with syntax highlighting and language label
             return (
-              <code className={`inline-block align-middle ${INLINE_CODE_BG} px-2 py-0.5 rounded text-xs sm:text-sm font-mono`} {...props}>
-                {children}
-              </code>
+              <div className="relative my-4">
+                {match && (
+                  <span className="absolute top-2 left-3 text-xs text-gray-500 uppercase tracking-wide select-none z-10">
+                    {match[1]}
+                  </span>
+                )}
+                <div className={CODE_BLOCK_BG + ' rounded-lg p-4 overflow-x-auto'}>
+                  <SyntaxHighlighter
+                    style={customGray}
+                    language={match ? match[1] : undefined}
+                    PreTag="div"
+                    customStyle={{ background: 'transparent', margin: 0, padding: 0 }}
+                    codeTagProps={{ style: { background: 'transparent' } }}
+                    {...props}
+                  >
+                    {String(children).replace(/\n$/, '')}
+                  </SyntaxHighlighter>
+                </div>
+              </div>
             );
           },
           p({ children, ...props }) {
-            return (
-              <p className="text-gray-700 dark:text-gray-300 mb-3 leading-relaxed" {...props}>
-                {children}
-              </p>
-            );
+            // If a paragraph only contains a single <code> element (inline code), render without block <p> styling
+            if (
+              Array.isArray(children) &&
+              children.length === 1 &&
+              React.isValidElement(children[0]) &&
+              (children[0] as any).type === 'code'
+            ) {
+              return <span {...props}>{children}</span>;
+            }
+            return <p {...props}>{children}</p>;
           },
           h1({ children, ...props }) {
             return (
