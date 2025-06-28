@@ -2,9 +2,10 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { HealthCheckProvider } from '@/components/HealthCheckProvider';
 import { ThemeProvider } from '@/components/ThemeProvider';
+import Head from 'next/head';
 
 export const metadata: Metadata = {
-  title: 'AI Chat Application',
+  title: 'AI Engineer Challenge',
   description: 'A modern chat interface for AI conversations',
 };
 
@@ -15,6 +16,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <Head>
+        <link rel="icon" href="/favicon.ico" type="image/x-icon" />
+        <title>AI Makerspace</title>
+      </Head>
       <body className="bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 antialiased">
         <ThemeProvider>
           <HealthCheckProvider>
