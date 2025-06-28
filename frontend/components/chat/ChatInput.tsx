@@ -85,24 +85,32 @@ export function ChatInput({
       <form onSubmit={handleSubmit} className="space-y-3">
         {/* Selected Images Preview */}
         {previewUrls.length > 0 && (
-          <div className="flex flex-wrap gap-2">
-            {previewUrls.map((url, index) => (
-              <div key={url} className="relative">
-                <img
-                  src={url}
-                  alt={`Selected image ${index + 1}`}
-                  className="w-16 h-16 object-cover rounded-lg"
-                />
-                <button
-                  type="button"
-                  onClick={() => removeImage(index)}
-                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600 transition-colors"
-                  aria-label={`Remove image ${index + 1}`}
-                >
-                  <X size={12} />
-                </button>
-              </div>
-            ))}
+          <div className="flex flex-wrap gap-2 mb-2 w-full justify-end">
+            {previewUrls.map((url, index) => {
+              // Calculate size based on count
+              const count = previewUrls.length;
+              let size = 'w-12 h-12'; // default 48px
+              if (count > 5 && count <= 10) size = 'w-9 h-9'; // 36px
+              else if (count > 10) size = 'w-7 h-7'; // 28px
+              return (
+                <div key={url} className="relative">
+                  <img
+                    src={url}
+                    alt={`Selected image ${index + 1}`}
+                    className={`object-cover rounded-lg ${size}`}
+                    style={{ maxWidth: '100%', maxHeight: '100%' }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeImage(index)}
+                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600 transition-colors"
+                    aria-label={`Remove image ${index + 1}`}
+                  >
+                    <X size={12} />
+                  </button>
+                </div>
+              );
+            })}
           </div>
         )}
 

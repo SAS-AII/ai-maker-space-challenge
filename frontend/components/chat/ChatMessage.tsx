@@ -32,6 +32,27 @@ export function ChatMessage({ message, isTyping = false }: ChatMessageProps) {
         aria-label={`${message.role} message`}
       >
         <div className="flex flex-col max-w-[80%]">
+          {/* Images above the chat bubble, not inside */}
+          {message.images && message.images.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-2">
+              {message.images.map((imageUrl, index) => (
+                <div key={index} className="relative">
+                  <img
+                    src={imageUrl}
+                    alt={`Image ${index + 1}`}
+                    className="object-cover rounded-lg"
+                    style={{
+                      width: '180px',
+                      height: '180px',
+                      maxWidth: '100%',
+                      maxHeight: '40vw',
+                    }}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+          {/* Chat bubble with only text */}
           <div
             className={cn(
               'chat-bubble',
@@ -44,32 +65,7 @@ export function ChatMessage({ message, isTyping = false }: ChatMessageProps) {
                 <span className="inline-block ml-1 animate-typing">...</span>
               )}
             </div>
-            
-            {message.images && message.images.length > 0 && (
-              <div className="mt-2 space-y-2">
-                {message.images.map((imageUrl, index) => (
-                  <div key={index} className="relative">
-                    <img
-                      src={imageUrl}
-                      alt={`Image ${index + 1}`}
-                      className="max-w-full h-auto rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
-                      onClick={() => handleImageClick(imageUrl)}
-                      role="button"
-                      tabIndex={0}
-                      aria-label={`View image ${index + 1} in lightbox`}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          e.preventDefault();
-                          handleImageClick(imageUrl);
-                        }
-                      }}
-                    />
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
-          
           <span className="text-xs text-gray-500 mt-1">
             {message.timestamp ? formatTimestamp(message.timestamp) : formatTimestamp(new Date())}
           </span>
