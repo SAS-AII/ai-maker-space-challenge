@@ -6,7 +6,7 @@ import { MobilePreferences } from './MobilePreferences';
 import NextImage from 'next/image';
 
 interface ChatInputProps {
-  onSendMessage: (content: string, images: File[]) => void;
+  onSendMessage: (content: string, images: File[]) => Promise<boolean>;
   disabled?: boolean;
   placeholder?: string;
   selectedModel?: string;
@@ -31,12 +31,14 @@ export function ChatInput({
   const [message, setMessage] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (message.trim() || selectedImages.length > 0) {
-      onSendMessage(message.trim(), selectedImages);
+    if (!(message.trim() || selectedImages.length > 0)) return;
+
+    const success = await onSendMessage(message.trim(), selectedImages);
+    if (success) {
       setMessage('');
-      if (onImageUpload) onImageUpload(null); // clear images after send
+      if (onImageUpload) onImageUpload(null);
     }
   };
 

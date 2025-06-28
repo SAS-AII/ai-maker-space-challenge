@@ -37,6 +37,8 @@ export function ChatContainer() {
   const chatBodyRef = useRef<HTMLDivElement>(null);
   const dragCounter = useRef(0);
   const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
+  const [pendingMessage, setPendingMessage] = useState<string>('');
+  const [pendingImagesForRetry, setPendingImagesForRetry] = useState<File[]>([]);
 
   // Handle responsive sidebar collapse
   useEffect(() => {
@@ -197,13 +199,16 @@ export function ChatContainer() {
     }
   };
 
-  const handleSendMessage = async (content: string, images: File[]) => {
-    if (!currentSessionId) return;
-    if (!content.trim() && images.length === 0) return;
+  const handleSendMessage = async (content: string, images: File[]): Promise<boolean> => {
+    if (!currentSessionId) return false;
+    if (!content.trim() && images.length === 0) return false;
     if (!settings.apiKey) {
+      // Store pending message and images for retry after API key is set
+      setPendingMessage(content);
+      setPendingImagesForRetry(images);
       setSettingsModalMessage('Please set your ChatGPT API key to send a message.');
       setIsSettingsOpen(true);
-      return;
+      return false;
     }
 
     // Store the prompt for potential retry
@@ -327,6 +332,7 @@ export function ChatContainer() {
       }));
     } finally {
       setIsTyping(false);
+      return true;
     }
   };
 
@@ -341,6 +347,12 @@ export function ChatContainer() {
     // If the modal was opened due to missing API key, close the message if key is now set
     if (newSettings.apiKey) {
       setSettingsModalMessage('');
+      // Retry pending message if exists
+      if (pendingMessage || pendingImagesForRetry.length > 0) {
+        handleSendMessage(pendingMessage, pendingImagesForRetry);
+        setPendingMessage('');
+        setPendingImagesForRetry([]);
+      }
     }
   };
 
