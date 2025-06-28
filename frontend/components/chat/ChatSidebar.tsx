@@ -34,7 +34,10 @@ export function ChatSidebar({
         )}
       >
         {/* Header */}
-        <div className="p-4 flex items-center justify-between">
+        <div className={cn(
+          'flex items-center',
+          isCollapsed ? 'h-16 justify-center' : 'p-4 justify-between'
+        )}>
           {!isCollapsed && (
             <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Chats</h2>
           )}
@@ -43,19 +46,23 @@ export function ChatSidebar({
             size="sm"
             onClick={onToggleCollapse}
             aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-            className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
+            className={cn(
+              'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100',
+              isCollapsed && 'mx-auto'
+            )}
           >
             {isCollapsed ? <ArrowRightFromLine size={20} /> : <ArrowLeftFromLine size={20} />}
           </Button>
         </div>
 
         {/* New Chat Button (always at the top, same position) */}
-        <div className="p-4">
+        <div className={cn(
+          isCollapsed ? 'flex items-center justify-center h-16' : 'p-4'
+        )}>
           <Button
             onClick={onNewChat}
             className={cn(
-              'w-full',
-              isCollapsed && 'w-12 h-12 p-0 flex items-center justify-center'
+              isCollapsed ? 'w-12 h-12 p-0 flex items-center justify-center mx-auto' : 'w-full'
             )}
             aria-label="Start new chat"
           >
