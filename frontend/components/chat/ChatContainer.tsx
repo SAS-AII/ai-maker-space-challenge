@@ -15,8 +15,8 @@ import { Settings as SettingsIcon, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 
 const DEFAULT_SETTINGS: Settings = {
-  developerPrompt: 'You are a helpful AI assistant.',
-  systemPrompt: 'You are a helpful AI assistant that provides accurate and helpful responses.',
+  developerPrompt: 'You are a friendly, expressive assistant that uses markdown formatting, emojis, and clear structure (headings, bullet points, code blocks) to deliver helpful and engaging answers.',
+  systemPrompt: 'You are a professional and creative AI assistant. Always use appropriate markdown: bold titles, bullet points, numbered steps, inline code, and emoji icons where helpful. Be concise, clear, and helpful, while keeping the tone friendly and engaging. Do not use excessive verbosity or unnecessary filler.',
   model: 'gpt-4.1-nano',
   apiKey: '',
 };

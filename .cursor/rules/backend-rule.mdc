@@ -1,0 +1,101 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Backend API Rules — **FastAPI + Python 3.12**
+
+## 1 · Stack & Project Layout
+
+* **FastAPI 0.110** + **Python 3.12**; all backend code lives in `/backend`
+* Top-level folders:
+
+  * **`app/`** → entry (`main.py`), dependency wiring
+  * **`routers/`** → one file per feature (`users.py`, `auth.py`, …)
+  * **`services/`** → pure business logic, no HTTP objects
+  * **`models/`** → Pydantic schemas & SQLAlchemy models
+  * **`core/`** → settings, security, logging, error‐handling utilities
+  * **`tests/`** → pytest suites (see § 9)
+* Configuration via `.env` + [`pydantic.Settings`](mdc:https:/docs.pydantic.dev/latest/usage/pydantic_settings) (loaded once in `core/config.py`)—**never** hard-code secrets.
+
+## 2 · CORS
+
+* App is public; keep CORS permissive:
+
+  ```python
+  app.add_middleware(
+      CORSMiddleware,
+      allow_origins=["*"],
+      allow_methods=["*"],
+      allow_headers=["*"],
+  )
+  ```
+* Re-evaluate origins as soon as deployment endpoints are known.
+
+## 3 · Logging Principles
+
+| Goal                    | Practice                                                                                                                |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| **No secret leakage**   | Structured logging with **`structlog`**; redact headers & body fields named `*key*`, `*secret*`, `password`, `token`.   |
+| **Trace success paths** | Each router handler ends with `logger.info("🟢 {endpoint} OK", status=status_code, elapsed=ms)`.                        |
+| **Trace failures**      | Custom middleware captures all uncaught exceptions and calls `logger.exception("🔴 {endpoint} FAILED", exc_info=True)`. |
+| **Correlation**         | `request_id` (UUID v4) attached via middleware; echoed in every log line and response header.                           |
+
+## 4 · Error Handling & Responses
+
+* Do **not** expose internals:
+
+  ```python
+  @app.exception_handler(Exception)
+  async def unhandled_exc(request: Request, exc: Exception):
+      # error already logged by middleware
+      return JSONResponse(
+          status_code=500,
+          content={"detail": "Internal server error"},
+      )
+  ```
+* Client-side errors (`HTTPException`) return only sanitized messages set by the developer.
+* `debug=False` in production; Uvicorn access logs stay enabled.
+
+## 5 · Endpoint Architecture
+
+* **Async** handlers (`async def`) everywhere; DB/HTTP calls use async drivers & pools.
+* Pydantic models validate input/output; never return raw ORM objects.
+* Every router file registers its routes under a **versioned prefix** (`/v1/users`, `/v1/chat`, …).
+
+## 6 · Security Essentials
+
+* JWT (HS256 / RS256) auth, 15 min access + refresh rotation.
+* Rate-limit sensitive endpoints (e.g., login) with Redis leaky bucket.
+* `Secure` & `HttpOnly` cookies; CSRF token for browser sessions.
+* Regular dependency review with `pip-audit`; CI fails on known CVEs.
+
+## 7 · Observability & Metrics
+
+* **Prometheus** metrics via `prometheus_fastapi_instrumentator` (latency, throughput, errors).
+* `/healthz` liveness & `/readyz` readiness endpoints.
+* Optional OpenTelemetry traces exported to Grafana Tempo.
+
+## 8 · Performance
+
+* Gunicorn with Uvicorn workers in prod (`workers = CPU × 2 + 1`).
+* Reuse HTTP clients / DB sessions via lifespan events.
+* Cache expensive lookups (e.g., config, static DB tables) in Redis with sensible TTL.
+
+## 9 · Quality Gates & Testing
+
+* **Pytest + httpx.AsyncClient**; ≥ 95 % line & branch coverage (enforced in CI).
+* Each new endpoint **must** ship with ✅ success-path test + ❌ error-path test.
+* Refactor ⇒ update or replace impacted tests; delete obsolete fixtures.
+* Ruff, MyPy (strict), Black; GitHub Actions: install → lint → type-check → test.
+
+## 10 · Comment & Docstring Guidelines
+
+* File, class & function **docstrings** explain purpose, inputs, outputs—concise, third-person, team-oriented.
+* Inline comments only for **non-obvious logic**, phrased professionally; never reference individuals (“you”, “I”), e.g.:
+
+  ```python
+  # Compute HMAC once to avoid leaking processing time per attempt
+  ```
+
+---
