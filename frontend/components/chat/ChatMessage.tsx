@@ -5,13 +5,18 @@ import { cn } from '@/lib/utils';
 import NextImage from 'next/image';
 import { MarkdownRenderer } from './MarkdownRenderer';
 import { CopyEntireResponseButton } from './CopyEntireResponseButton';
+import { ResponseActions } from './ResponseActions';
 
 interface ChatMessageProps {
   message: Message;
   isTyping?: boolean;
+  onRetry?: (prompt: string) => void;
+  currentModel?: string;
+  onModelChange?: (model: string) => void;
+  originPrompt?: string;
 }
 
-export function ChatMessage({ message, isTyping = false }: ChatMessageProps) {
+export function ChatMessage({ message, isTyping = false, onRetry, currentModel, onModelChange, originPrompt }: ChatMessageProps) {
   const isUser = message.role === 'user';
 
   return (
@@ -59,13 +64,24 @@ export function ChatMessage({ message, isTyping = false }: ChatMessageProps) {
             </div>
           ) : (
             // Assistant message with markdown rendering and no bubble
-            <div className="w-full relative group">
+            <div className="w-full">
               <MarkdownRenderer 
                 content={message.content + (isTyping ? '...' : '')} 
                 className="text-gray-900 dark:text-gray-100"
               />
-              {/* Copy entire response button */}
-              <CopyEntireResponseButton markdown={message.content} />
+              {/* Action bar */}
+              <div className="flex items-center gap-3 mt-3">
+                <CopyEntireResponseButton markdown={message.content} />
+                {/* Dropdown actions */}
+                {onRetry && currentModel && onModelChange && (
+                  <ResponseActions 
+                    onRetry={onRetry} 
+                    currentModel={currentModel} 
+                    onModelChange={onModelChange}
+                    prompt={originPrompt || ''}
+                  />
+                )}
+              </div>
             </div>
           )}
           

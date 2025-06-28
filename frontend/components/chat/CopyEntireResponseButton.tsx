@@ -13,8 +13,8 @@ export function CopyEntireResponseButton({ markdown }: CopyEntireResponseButtonP
       type="button"
       aria-label="Copy entire response"
       className={cn(
-        'absolute -bottom-2 right-0 flex items-center gap-1 text-xs text-gray-500',
-        'opacity-0 group-hover:opacity-100 transition-opacity'
+        'inline-flex items-center gap-1 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100',
+        'px-2 py-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors'
       )}
       onClick={async () => {
         try {
@@ -27,11 +27,9 @@ export function CopyEntireResponseButton({ markdown }: CopyEntireResponseButtonP
       }}
     >
       {copied ? (
-        <>
-          <Check size={14} className="text-green-600" /> Copied!
-        </>
+        <Check size={18} className="text-green-600" />
       ) : (
-        <Copy size={14} />
+        <Copy size={18} />
       )}
     </button>
   );

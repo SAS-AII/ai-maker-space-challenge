@@ -17,7 +17,7 @@ import { Button } from '@/components/ui/Button';
 const DEFAULT_SETTINGS: Settings = {
   developerPrompt: 'You are a friendly, expressive assistant that uses markdown formatting, emojis, and clear structure (headings, bullet points, code blocks) to deliver helpful and engaging answers.',
   systemPrompt: 'You are a professional and creative AI assistant. Always use appropriate markdown: bold titles, bullet points, numbered steps, inline code, and emoji icons where helpful. Be concise, clear, and helpful, while keeping the tone friendly and engaging. Do not use excessive verbosity or unnecessary filler.',
-  model: 'gpt-4.1-nano',
+  model: 'gpt-4o',
   apiKey: '',
 };
 
@@ -39,6 +39,7 @@ export function ChatContainer() {
   const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
   const [pendingMessage, setPendingMessage] = useState<string>('');
   const [pendingImagesForRetry, setPendingImagesForRetry] = useState<File[]>([]);
+  const lastScrollTimeRef = useRef(0);
 
   // Handle responsive sidebar collapse
   useEffect(() => {
@@ -97,11 +98,18 @@ export function ChatContainer() {
     return () => chatBody.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Auto-scroll to bottom when new messages are added, but only if shouldAutoScroll is true
+  // Auto-scroll to bottom when new messages are added, but only if shouldAutoScroll is true.
+  // Throttle the scroll to at most once every 100ms to prevent jitter during token streaming.
   useEffect(() => {
-    if (shouldAutoScroll) {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (!shouldAutoScroll) return;
+
+    const now = Date.now();
+    if (now - lastScrollTimeRef.current < 100) {
+      // Too soon since the last scroll – skip to avoid excessive scrolling.
+      return;
     }
+    lastScrollTimeRef.current = now;
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [sessions, currentSessionId, shouldAutoScroll]);
 
   // Clean up object URLs to prevent memory leaks
@@ -263,6 +271,8 @@ export function ChatContainer() {
       if (typeof settings.apiKey === 'string' && settings.apiKey) {
         formData.set('apiKey', settings.apiKey);
       }
+      // Include selected model so backend can use it
+      formData.set('model', (currentSession?.model || settings.model) as string);
 
       const stream = await sendChatMessage(formData);
 
@@ -339,6 +349,12 @@ export function ChatContainer() {
   const handleRetryLastPrompt = () => {
     if (lastPrompt) {
       handleSendMessage(lastPrompt, []);
+    }
+  };
+
+  const handleRetryPrompt = (prompt: string) => {
+    if (prompt) {
+      handleSendMessage(prompt, []);
     }
   };
 
@@ -449,13 +465,21 @@ export function ChatContainer() {
             <ErrorBanner onRetry={handleRetryLastPrompt} lastPrompt={lastPrompt} />
             {currentSession ? (
               <div className="space-y-4">
-                {currentSession.messages.map((message, index) => (
-                  <ChatMessage
-                    key={index}
-                    message={message}
-                    isTyping={isTyping && index === currentSession.messages.length - 1 && message.role === 'assistant'}
-                  />
-                ))}
+                {currentSession.messages.map((message, index) => {
+                  const prevMsg = index > 0 ? currentSession.messages[index - 1] : undefined;
+                  const originPrompt = message.role === 'assistant' && prevMsg?.role === 'user' ? prevMsg.content : '';
+                  return (
+                    <ChatMessage
+                      key={index}
+                      message={message}
+                      isTyping={isTyping && index === currentSession.messages.length - 1 && message.role === 'assistant'}
+                      onRetry={handleRetryPrompt}
+                      currentModel={currentSession.model || settings.model}
+                      onModelChange={handleSessionModelChange}
+                      originPrompt={originPrompt}
+                    />
+                  );
+                })}
                 <div ref={messagesEndRef} />
               </div>
             ) : (
@@ -503,7 +527,7 @@ export function ChatContainer() {
                   {/* Disclaimer text */}
                   <div className="mt-4 text-center">
                     <p className="text-xs text-gray-500 dark:text-gray-400">
-                      This chat can make mistakes. Don&apos;t fully trust him. :D
+                      This chat can make mistakes. Don&apos;t fully trust it. :D
                     </p>
                   </div>
                 </div>
@@ -511,7 +535,7 @@ export function ChatContainer() {
             )}
             
             {/* For mobile/tablet or chats with messages - bottom layout */}
-            <div className={`${isNewEmptyChat ? 'xl:hidden' : ''} max-w-4xl mx-auto w-full px-4 md:px-6 pb-4`}>
+            <div className={`${isNewEmptyChat ? 'xl:hidden' : ''} max-w-4xl mx-auto w-full p-4 md:p-6 pb-4`}>
               {/* Question for new empty chats on mobile/tablet */}
               {isNewEmptyChat && (
                 <div className="text-center mb-6">
@@ -538,7 +562,7 @@ export function ChatContainer() {
               {/* Disclaimer text - only on larger screens */}
               <div className="hidden md:block mt-4 text-center">
                 <p className="text-xs text-gray-500 dark:text-gray-400">
-                  This chat can make mistakes. Don&apos;t fully trust him. :D
+                  This chat can make mistakes. Don&apos;t fully trust it. :D
                 </p>
               </div>
             </div>
