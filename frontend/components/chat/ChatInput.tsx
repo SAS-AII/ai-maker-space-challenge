@@ -1,8 +1,9 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/Button';
-import { Send, Image, X } from 'lucide-react';
+import { Send, Image as LucideImage, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { MobilePreferences } from './MobilePreferences';
+import NextImage from 'next/image';
 
 interface ChatInputProps {
   onSendMessage: (content: string, images: File[]) => void;
@@ -54,11 +55,13 @@ export function ChatInput({
           <div className="flex flex-row gap-2 mb-2 w-full">
             {previewUrls.map((url, index) => (
               <div key={url} className="relative">
-                <img
+                <NextImage
                   src={url}
-                  alt={`Selected image ${index + 1}`}
+                  alt={selectedImages[index]?.name || `Selected image ${index + 1}`}
+                  width={64}
+                  height={64}
                   className="object-cover rounded-lg"
-                  style={{ width: '64px', height: '64px', maxWidth: '100%', maxHeight: '100%' }}
+                  unoptimized
                 />
                 <button
                   type="button"
@@ -113,7 +116,7 @@ export function ChatInput({
               aria-label="Upload image"
               className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
             >
-              <Image size={20} className="sm:mr-2" />
+              <LucideImage size={20} className="sm:mr-2" />
               <span className="hidden sm:inline">Image</span>
             </Button>
             

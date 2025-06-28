@@ -451,7 +451,7 @@ export function ChatContainer() {
             {/* Disclaimer text - only on larger screens */}
             <div className="hidden md:block mt-4 text-center">
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                This chat can make mistakes. Don't fully trust him. :D
+                This chat can make mistakes. Don&apos;t fully trust him. :D
               </p>
             </div>
           </div>
