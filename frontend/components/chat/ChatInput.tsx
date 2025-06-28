@@ -15,7 +15,7 @@ interface ChatInputProps {
 export function ChatInput({ 
   onSendMessage, 
   disabled = false, 
-  placeholder = "Type a message...",
+  placeholder = "Ask me anything...",
   selectedModel,
   onModelChange
 }: ChatInputProps) {
