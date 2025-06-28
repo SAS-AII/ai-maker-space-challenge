@@ -3,6 +3,7 @@ import { Message } from '@/types/chat';
 import { formatTimestamp } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 import NextImage from 'next/image';
+import { MarkdownRenderer } from './MarkdownRenderer';
 
 interface ChatMessageProps {
   message: Message;
@@ -46,20 +47,25 @@ export function ChatMessage({ message, isTyping = false }: ChatMessageProps) {
               ))}
             </div>
           )}
-          {/* Chat bubble with only text */}
-          <div
-            className={cn(
-              'chat-bubble',
-              isUser ? 'chat-bubble-user' : 'chat-bubble-assistant'
-            )}
-          >
-            <div className="whitespace-pre-wrap break-words">
-              {message.content}
-              {isTyping && (
-                <span className="inline-block ml-1 animate-typing">...</span>
-              )}
+          
+          {/* Message content - different rendering for user vs assistant */}
+          {isUser ? (
+            // User message with bubble styling
+            <div className="chat-bubble chat-bubble-user">
+              <div className="whitespace-pre-wrap break-words">
+                {message.content}
+              </div>
             </div>
-          </div>
+          ) : (
+            // Assistant message with markdown rendering and no bubble
+            <div className="w-full">
+              <MarkdownRenderer 
+                content={message.content + (isTyping ? '...' : '')} 
+                className="text-gray-900 dark:text-gray-100"
+              />
+            </div>
+          )}
+          
           <span className={cn(
             'text-xs text-gray-500 mt-1 block',
             isUser ? 'text-right' : 'text-left'

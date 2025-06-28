@@ -62,9 +62,7 @@
     @apply bg-primary-500 text-white ml-auto;
   }
   
-  .chat-bubble-assistant {
-    @apply bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-gray-100;
-  }
+  /* Removed assistant bubble styling - now uses natural text flow */
   
   .sidebar-item {
     @apply flex items-center justify-between p-3 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg cursor-pointer transition-colors;
@@ -80,5 +78,66 @@
   
   .btn-secondary {
     @apply bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300 px-4 py-2 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors;
+  }
+
+  /* Markdown content styling */
+  .prose {
+    @apply text-gray-900 dark:text-gray-100;
+  }
+
+  .prose p {
+    @apply mb-3 leading-relaxed;
+  }
+
+  .prose h1, .prose h2, .prose h3 {
+    @apply font-semibold text-gray-900 dark:text-gray-100;
+  }
+
+  .prose h1 {
+    @apply text-2xl mb-4 mt-6;
+  }
+
+  .prose h2 {
+    @apply text-xl mb-3 mt-5;
+  }
+
+  .prose h3 {
+    @apply text-lg mb-2 mt-4;
+  }
+
+  .prose ul {
+    @apply list-disc pl-6 mb-3;
+  }
+
+  .prose ol {
+    @apply list-decimal pl-6 mb-3;
+  }
+
+  .prose li {
+    @apply text-gray-700 dark:text-gray-300 mb-1;
+  }
+
+  .prose strong {
+    @apply font-semibold text-gray-900 dark:text-gray-100;
+  }
+
+  .prose em {
+    @apply italic text-gray-700 dark:text-gray-300;
+  }
+
+  .prose code {
+    @apply bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded text-sm;
+  }
+
+  .prose pre {
+    @apply bg-gray-100 dark:bg-gray-800 p-4 rounded-lg overflow-x-auto border border-gray-200 dark:border-gray-700;
+  }
+
+  .prose blockquote {
+    @apply border-l-4 border-gray-300 dark:border-gray-600 pl-4 italic text-gray-600 dark:text-gray-400;
+  }
+
+  .prose a {
+    @apply text-primary-600 dark:text-primary-400 underline hover:text-primary-700 dark:hover:text-primary-300;
   }
 } 
