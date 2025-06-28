@@ -1,8 +1,7 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Message } from '@/types/chat';
 import { formatTimestamp } from '@/lib/utils';
 import { cn } from '@/lib/utils';
-import { X } from 'lucide-react';
 import NextImage from 'next/image';
 
 interface ChatMessageProps {
