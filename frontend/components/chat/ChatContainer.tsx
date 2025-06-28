@@ -147,6 +147,9 @@ export function ChatContainer() {
   }, []);
 
   const currentSession = sessions.find(s => s.id === currentSessionId);
+  
+  // Check if current session is empty (new chat)
+  const isNewEmptyChat = currentSession && (!currentSession.messages || currentSession.messages.length === 0);
 
   const createNewChat = () => {
     if (!settings.apiKey) {
@@ -202,41 +205,40 @@ export function ChatContainer() {
     // Update session with user message
     setSessions(prev => prev.map(session => {
       if (session.id === currentSessionId) {
-        const updatedMessages = [...session.messages, userMessage];
         return {
           ...session,
+          messages: [...session.messages, userMessage],
           title: session.messages.length === 0 ? generateChatTitle([userMessage]) : session.title,
-          messages: updatedMessages,
         };
       }
       return session;
     }));
 
-    // Prepare messages for API call
-    const allMessages: Message[] = [
-      { role: 'system', content: settings.systemPrompt || '' },
-      { role: 'user', content: settings.developerPrompt || '' },
-      ...currentSession?.messages || [],
-      userMessage,
-    ];
-
-    const allMessagesForApi = allMessages.map(msg => ({
-      role: msg.role,
-      content: msg.content,
-    }));
+    // Clear selected images
+    setSelectedImages([]);
+    setPreviewUrls([]);
 
     setIsTyping(true);
 
     try {
+      // Prepare messages for API call
+      const allMessages: Message[] = [
+        { role: 'system', content: settings.systemPrompt || '' },
+        { role: 'user', content: settings.developerPrompt || '' },
+        ...currentSession?.messages || [],
+        userMessage,
+      ];
+
+      const allMessagesForApi = allMessages.map(msg => ({
+        role: msg.role,
+        content: msg.content,
+      }));
+
       const formData = new FormData();
       formData.append('messages', JSON.stringify(allMessagesForApi));
       images.forEach(imageFile => {
         formData.append('images', imageFile);
       });
-      // Remove duplicate apiKey append if present
-      if (formData.has('apiKey')) {
-        formData.delete('apiKey');
-      }
       if (typeof settings.apiKey === 'string' && settings.apiKey) {
         formData.set('apiKey', settings.apiKey);
       }
@@ -439,26 +441,80 @@ export function ChatContainer() {
           </div>
         </div>
 
-        {/* Input Area - perfectly aligned and wide */}
+        {/* Input Area - Conditionally positioned based on chat state */}
         {currentSession && (
-          <div className="max-w-4xl mx-auto w-full px-4 md:px-6 pb-4">
-            <ChatInput
-              onSendMessage={handleSendMessage}
-              disabled={isTyping}
-              selectedModel={currentSession.model || settings.model}
-              onModelChange={handleSessionModelChange}
-              selectedImages={selectedImages}
-              previewUrls={previewUrls}
-              onImageUpload={handleImageUpload}
-              onRemoveImage={removeImage}
-            />
-            {/* Disclaimer text - only on larger screens */}
-            <div className="hidden md:block mt-4 text-center">
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                This chat can make mistakes. Don&apos;t fully trust him. :D
-              </p>
+          <>
+            {/* For new empty chats on larger screens - centered layout */}
+            {isNewEmptyChat && (
+              <div className="hidden xl:flex flex-col items-center justify-center flex-1 px-4 md:px-6">
+                <div className="w-full max-w-4xl">
+                  {/* Question above input */}
+                  <div className="text-center mb-8">
+                    <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                      How can I help you today?
+                    </h2>
+                    <p className="text-gray-600 dark:text-gray-400">
+                      Ask me anything, and I'll do my best to assist you.
+                    </p>
+                  </div>
+                  
+                  {/* Centered input container with exact same styling */}
+                  <div className="w-full">
+                    <ChatInput
+                      onSendMessage={handleSendMessage}
+                      disabled={isTyping}
+                      selectedModel={currentSession.model || settings.model}
+                      onModelChange={handleSessionModelChange}
+                      selectedImages={selectedImages}
+                      previewUrls={previewUrls}
+                      onImageUpload={handleImageUpload}
+                      onRemoveImage={removeImage}
+                    />
+                  </div>
+                  
+                  {/* Disclaimer text */}
+                  <div className="mt-4 text-center">
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      This chat can make mistakes. Don&apos;t fully trust him. :D
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {/* For mobile/tablet or chats with messages - bottom layout */}
+            <div className={`${isNewEmptyChat ? 'xl:hidden' : ''} max-w-4xl mx-auto w-full px-4 md:px-6 pb-4`}>
+              {/* Question for new empty chats on mobile/tablet */}
+              {isNewEmptyChat && (
+                <div className="text-center mb-6">
+                  <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                    How can I help you today?
+                  </h2>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Ask me anything, and I'll do my best to assist you.
+                  </p>
+                </div>
+              )}
+              
+              <ChatInput
+                onSendMessage={handleSendMessage}
+                disabled={isTyping}
+                selectedModel={currentSession.model || settings.model}
+                onModelChange={handleSessionModelChange}
+                selectedImages={selectedImages}
+                previewUrls={previewUrls}
+                onImageUpload={handleImageUpload}
+                onRemoveImage={removeImage}
+              />
+              
+              {/* Disclaimer text - only on larger screens */}
+              <div className="hidden md:block mt-4 text-center">
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  This chat can make mistakes. Don&apos;t fully trust him. :D
+                </p>
+              </div>
             </div>
-          </div>
+          </>
         )}
       </div>
 
