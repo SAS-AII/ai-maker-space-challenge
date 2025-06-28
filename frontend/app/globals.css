@@ -140,4 +140,10 @@
   .prose a {
     @apply text-primary-600 dark:text-primary-400 underline hover:text-primary-700 dark:hover:text-primary-300;
   }
+
+  /* Remove backticks around inline code added by @tailwindcss/typography */
+  .prose code::before,
+  .prose code::after {
+    content: '' !important;
+  }
 } 

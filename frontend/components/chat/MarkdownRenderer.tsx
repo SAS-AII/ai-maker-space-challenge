@@ -90,7 +90,8 @@ export function MarkdownRenderer({ content, className }: MarkdownRendererProps) 
         components={{
           code({ node, inline, className, children, ...props }) {
             const match = /language-(\w+)/.exec(className || '');
-            if (inline) {
+            // Treat truly inline or language-less code as inline span
+            if (inline || !match) {
               // Inline code: render as inline <code> with minimal styling
               return (
                 <code
