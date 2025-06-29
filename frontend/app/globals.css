@@ -59,7 +59,7 @@
   }
   
   .chat-bubble-user {
-    @apply bg-primary-500 text-white ml-auto;
+    @apply bg-primary-500 text-white ml-auto w-full sm:w-auto;
   }
   
   /* Removed assistant bubble styling - now uses natural text flow */

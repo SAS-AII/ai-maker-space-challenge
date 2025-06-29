@@ -295,7 +295,10 @@ export function ChatContainer() {
       images: imagePreviews,
     };
 
-    // Update session with user message
+    // Determine if this is the very first user message of the conversation
+    const isFirstMsg = !currentSession || currentSession.messages.length === 0;
+
+    // Update session with user message (and placeholder title if it's the first)
     setSessions(prev => prev.map(session => {
       if (session.id === currentSessionId) {
         return {
@@ -405,9 +408,17 @@ export function ChatContainer() {
         return session;
       }));
     } finally {
+      // Stop the typing indicator
       setIsTyping(false);
-      return true;
+
+      // Kick-off background title generation *after* the main reply finished.
+      if (isFirstMsg && currentSessionId) {
+        generateAIChatTitle(content, currentSessionId);
+      }
     }
+
+    // Indicate to the caller that the send operation was triggered.
+    return true;
   };
 
   const handleRetryLastPrompt = () => {
@@ -457,6 +468,63 @@ export function ChatContainer() {
     const urlToRemove = previewUrls[index];
     URL.revokeObjectURL(urlToRemove);
     setPreviewUrls(prev => prev.filter((_, i) => i !== index));
+  };
+
+  /**
+   * Generates a short descriptive chat title by making a *separate* background
+   * request to the same chat endpoint. It uses only the user's first prompt so
+   * it never interferes with the main conversation flow.
+   */
+  const generateAIChatTitle = async (prompt: string, sessionId: string) => {
+    try {
+      const messagesForTitle = [
+        {
+          role: 'system',
+          content:
+            'Provide a concise 3-5 word title summarizing the following question. Respond with only the title text.',
+        },
+        { role: 'user', content: prompt },
+      ];
+
+      const fd = new FormData();
+      fd.append('messages', JSON.stringify(messagesForTitle));
+      fd.set('model', settings.model as string);
+      if (typeof settings.apiKey === 'string' && settings.apiKey) {
+        fd.set('apiKey', settings.apiKey);
+      }
+
+      const stream = await sendChatMessage(fd);
+      const reader = stream.getReader();
+      const decoder = new TextDecoder();
+      let raw = '';
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        raw += decoder.decode(value);
+      }
+
+      // Strip common SSE prefixes and DONE markers then trim/clip.
+      const cleaned = raw
+        .split('\n')
+        .map((l) => l.replace(/^data:\s*/, '').trim())
+        .filter((l) => l && l !== '[DONE]')
+        .join(' ');
+
+      let title = cleaned.replace(/^["']|["']$/g, '').slice(0, 40).trim();
+      if (!title) return; // Nothing received.
+
+      // Animate typing – ~35 ms per character for a quick but noticeable effect.
+      let i = 0;
+      const interval = setInterval(() => {
+        setSessions((prev) =>
+          prev.map((s) => (s.id === sessionId ? { ...s, title: title.slice(0, i + 1) } : s)),
+        );
+        i += 1;
+        if (i >= title.length) clearInterval(interval);
+      }, 35);
+    } catch (err) {
+      console.error('Failed to generate title:', err);
+    }
   };
 
   return (

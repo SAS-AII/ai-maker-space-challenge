@@ -24,12 +24,12 @@ export function ChatMessage({ message, isTyping = false, onRetry, currentModel, 
       <div
         className={cn(
           'flex mb-4',
-          isUser ? 'justify-end' : 'justify-start'
+          isUser ? 'sm:justify-end justify-start' : 'justify-start'
         )}
         role="article"
         aria-label={`${message.role} message`}
       >
-        <div className="flex flex-col max-w-[80%]">
+        <div className="flex flex-col w-full sm:max-w-[80%]">
           {/* Images above the chat bubble, not inside */}
           {message.images && message.images.length > 0 && (
             <div

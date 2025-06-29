@@ -15,12 +15,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning className="overflow-x-hidden">
       <Head>
         <link rel="icon" href="/favicon.ico" type="image/x-icon" />
         <title>AI Makerspace</title>
       </Head>
-      <body className="bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 antialiased">
+      <body className="bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 antialiased overflow-hidden">
         <ThemeProvider>
           <HealthCheckProvider>
             {children}
