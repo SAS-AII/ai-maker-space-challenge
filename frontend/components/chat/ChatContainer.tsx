@@ -510,7 +510,7 @@ export function ChatContainer() {
         .filter((l) => l && l !== '[DONE]')
         .join(' ');
 
-      let title = cleaned.replace(/^["']|["']$/g, '').slice(0, 40).trim();
+      const title = cleaned.replace(/^["']|["']$/g, '').slice(0, 40).trim();
       if (!title) return; // Nothing received.
 
       // Animate typing – ~35 ms per character for a quick but noticeable effect.
