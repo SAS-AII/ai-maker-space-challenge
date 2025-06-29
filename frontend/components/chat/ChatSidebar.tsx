@@ -94,7 +94,11 @@ export function ChatSidebar({
                       currentSessionId === session.id && 'bg-primary-50 dark:bg-primary-900/20 border-primary-200 dark:border-primary-700',
                       isCollapsed && 'justify-center p-2'
                     )}
-                    onClick={() => onSelectSession(session.id)}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      onSelectSession(session.id);
+                    }}
                     role="button"
                     tabIndex={0}
                     aria-label={`Select chat: ${session.title}`}
@@ -191,9 +195,21 @@ export function ChatSidebar({
                         'sidebar-item group',
                         currentSessionId === session.id && 'bg-primary-50 dark:bg-primary-900/20 border-primary-200 dark:border-primary-700'
                       )}
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
                         onSelectSession(session.id);
-                        onToggleCollapse(); // Close drawer after selection
+                        onToggleCollapse();
+                      }}
+                      onTouchStart={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                      }}
+                      onTouchEnd={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        onSelectSession(session.id);
+                        onToggleCollapse();
                       }}
                       role="button"
                       tabIndex={0}
