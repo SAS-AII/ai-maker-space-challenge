@@ -36,6 +36,7 @@ export function ChatContainer() {
   const [isDragging, setIsDragging] = useState(false);
   const chatBodyRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const lastScrollTop = useRef(0);
   const dragCounter = useRef(0);
   const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
   const [pendingMessage, setPendingMessage] = useState<string>('');
@@ -105,9 +106,25 @@ export function ChatContainer() {
     const el = scrollRef.current;
     if (!el) return;
     const handleScroll = () => {
-      // If user is within 100px of the bottom, enable auto-scroll
       const { scrollTop, scrollHeight, clientHeight } = el;
-      setShouldAutoScroll(scrollTop + clientHeight >= scrollHeight - 100);
+
+      // Determine whether the user is currently at (or extremely close to) the bottom
+      const isAtBottom = scrollHeight - (scrollTop + clientHeight) <= 10;
+
+      // Detect upward user scroll: if the current scrollTop is smaller than the
+      // previous one AND we're *not* at the absolute bottom, we assume the user
+      // wants to read earlier messages, so we disable auto-scroll.
+      const isScrollingUp = scrollTop < lastScrollTop.current;
+
+      if (isScrollingUp && !isAtBottom) {
+        setShouldAutoScroll(false);
+      } else if (isAtBottom) {
+        // Whenever the user reaches the bottom again we re-enable auto-scroll.
+        setShouldAutoScroll(true);
+      }
+
+      // Update tracker for direction detection
+      lastScrollTop.current = scrollTop;
     };
     el.addEventListener('scroll', handleScroll);
     return () => el.removeEventListener('scroll', handleScroll);
@@ -133,7 +150,10 @@ export function ChatContainer() {
 
     // Observe DOM changes (tokens appended).
     const observer = new MutationObserver(() => {
-      if (shouldAutoScroll) {
+      // Only auto-scroll while we are *actively streaming* (`isTyping`) and the
+      // user hasn't opted out (`shouldAutoScroll`). This prevents the jitter
+      // that happened after generation finished.
+      if (shouldAutoScroll && isTyping) {
         needsScroll = true;
       }
     });
@@ -154,7 +174,7 @@ export function ChatContainer() {
       observer.disconnect();
       cancelAnimationFrame(rafId);
     };
-  }, [shouldAutoScroll]);
+  }, [shouldAutoScroll, isTyping]);
 
   // Clean up object URLs to prevent memory leaks
   useEffect(() => {

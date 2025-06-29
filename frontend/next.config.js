@@ -13,6 +13,25 @@ const nextConfig = {
       },
     ];
   },
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          {
+            key: 'Content-Security-Policy',
+            value:
+              "default-src 'self'; " +
+              "img-src 'self' data: blob:; " +
+              "media-src 'self' data: blob:; " +
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:; " +
+              "style-src 'self' 'unsafe-inline' blob:; " +
+              "connect-src 'self' http://127.0.0.1:8000 ws://localhost:*;",
+          },
+        ],
+      },
+    ];
+  },
 };
 
 module.exports = nextConfig; 
