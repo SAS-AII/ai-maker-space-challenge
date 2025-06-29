@@ -29,7 +29,7 @@ export function ChatMessage({ message, isTyping = false, onRetry, currentModel, 
         role="article"
         aria-label={`${message.role} message`}
       >
-        <div className="flex flex-col w-full sm:max-w-[80%]">
+        <div className="flex flex-col w-full">
           {/* Images above the chat bubble, not inside */}
           {message.images && message.images.length > 0 && (
             <div
