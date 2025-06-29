@@ -550,8 +550,8 @@ export function ChatContainer() {
             </div>
           </div>
         )}
-        {/* Header – sticky (mobile) / static (desktop) */}
-        <div className="bg-white dark:bg-gray-900 px-4 sm:px-6 py-4 flex items-center justify-between sticky top-0 z-20 border-b border-gray-200 dark:border-gray-700">
+        {/* Header – fixed on mobile, sticky/static on larger screens */}
+        <div className="bg-white dark:bg-gray-900 px-4 sm:px-6 py-4 flex items-center justify-between fixed md:sticky top-0 inset-x-0 z-30 border-b border-gray-200 dark:border-gray-700 md:relative md:z-20">
           {/* Left side - Hamburger and Model Selector */}
           <div className="flex items-center gap-2 sm:gap-4">
             <Button
@@ -572,7 +572,7 @@ export function ChatContainer() {
             </div>
           </div>
           {/* Center - Title */}
-          <h1 className="absolute left-1/2 -translate-x-1/2 text-base sm:text-xl font-semibold text-gray-900 dark:text-gray-100 truncate px-2 max-w-[200px] sm:max-w-[300px]">
+          <h1 className="absolute left-1/2 -translate-x-1/2 text-base sm:text-xl font-semibold text-gray-900 dark:text-gray-100 truncate px-2 max-w-[60vw] sm:max-w-[420px] lg:max-w-[600px]">
             {currentSession?.title || 'AI Chat'}
           </h1>
           {/* Right side - Settings and Theme Toggle */}
@@ -591,7 +591,7 @@ export function ChatContainer() {
         </div>
 
         {/* Chat Messages Area */}
-        <div ref={scrollRef} className="flex-1 overflow-y-auto pb-40 sm:pb-0">
+        <div ref={scrollRef} className="flex-1 overflow-y-auto pb-40 sm:pb-0 overscroll-contain pt-20 md:pt-0">
           <div className="max-w-4xl mx-auto p-4 md:p-6">
             {/* Error Banner */}
             <ErrorBanner onRetry={handleRetryLastPrompt} lastPrompt={lastPrompt} />
