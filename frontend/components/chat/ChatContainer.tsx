@@ -482,8 +482,8 @@ export function ChatContainer() {
             </div>
           </div>
         )}
-        {/* Header */}
-        <div className="bg-white dark:bg-gray-900 px-4 sm:px-6 py-4 flex items-center justify-between relative">
+        {/* Header – sticky (mobile) / static (desktop) */}
+        <div className="bg-white dark:bg-gray-900 px-4 sm:px-6 py-4 flex items-center justify-between sticky top-0 z-20 border-b border-gray-200 dark:border-gray-700">
           {/* Left side - Hamburger and Model Selector */}
           <div className="flex items-center gap-2 sm:gap-4">
             <Button
@@ -523,7 +523,7 @@ export function ChatContainer() {
         </div>
 
         {/* Chat Messages Area */}
-        <div ref={scrollRef} className="flex-1 overflow-y-auto">
+        <div ref={scrollRef} className="flex-1 overflow-y-auto pb-40 sm:pb-0">
           <div className="max-w-4xl mx-auto p-4 md:p-6">
             {/* Error Banner */}
             <ErrorBanner onRetry={handleRetryLastPrompt} lastPrompt={lastPrompt} />
@@ -598,8 +598,10 @@ export function ChatContainer() {
               </div>
             )}
             
-            {/* For mobile/tablet or chats with messages - bottom layout */}
-            <div className={`${isNewEmptyChat ? 'xl:hidden' : ''} max-w-4xl mx-auto w-full p-4 md:p-6 pb-4`}>
+            {/* Mobile / tablet: fixed input at bottom; desktop: as before */}
+            <div
+              className={`${isNewEmptyChat ? 'xl:hidden' : ''} w-full p-4 md:p-6 pb-4 md:relative md:max-w-4xl md:mx-auto fixed bottom-0 left-0 right-0 z-30 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700`}
+            >
               {/* Question for new empty chats on mobile/tablet */}
               {isNewEmptyChat && (
                 <div className="text-center mb-6">
