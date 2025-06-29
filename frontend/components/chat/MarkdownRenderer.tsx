@@ -87,7 +87,7 @@ export function MarkdownRenderer({ content, className }: MarkdownRendererProps) 
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         components={{
-          code({ inline, className, children, ...props }) {
+          code({ inline, className, children, ...props }: { inline?: boolean; className?: string; children: React.ReactNode; [key: string]: any }) {
             const match = /language-(\w+)/.exec(className || '');
             // Treat truly inline or language-less code as inline span
             if (inline || !match) {
