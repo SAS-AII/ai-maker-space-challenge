@@ -1,6 +1,9 @@
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import remarkMath from 'remark-math';            // NEW CODE
+import rehypeKatex from 'rehype-katex';          // NEW CODE
+import 'katex/dist/katex.min.css';    
 import { cn } from '@/lib/utils';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
@@ -33,6 +36,19 @@ const customGray = {
   },
 };
 
+/** Replace \(...\) ➜ $...$   and   \[...\] ➜ $$...$$
+ *  Works with multi-line blocks and leaves escaped sequences intact. */
+function normaliseMathDelimiters(src: string): string {
+  return src
+    // display:  \[ ... \]  →  $$ ... $$
+    .replace(/\\\\\[|\\\\\]/g, m => m)                              // keep \\[ \\]
+    .replace(/\\\[/g, '$$').replace(/\\\]/g, '$$')
+    // inline:   \( ... \)  →  $ ... $
+    .replace(/\\\\\(|\\\\\)/g, m => m)                              // keep \\( \\)
+    .replace(/\\\(/g, '$').replace(/\\\)/g, '$');
+}
+
+
 function CopyButton({ text, className = '' }: { text: string; className?: string }) {
   const [copied, setCopied] = useState(false);
   return (
@@ -61,6 +77,9 @@ function CopyButton({ text, className = '' }: { text: string; className?: string
 }
 
 export function MarkdownRenderer({ content, className }: MarkdownRendererProps) {
+
+  const safeContent = normaliseMathDelimiters(content);
+
   return (
     <div
       className={cn(
@@ -85,7 +104,8 @@ export function MarkdownRenderer({ content, className }: MarkdownRendererProps) 
       )}
     >
       <ReactMarkdown
-        remarkPlugins={[remarkGfm]}
+        remarkPlugins={[remarkMath, remarkGfm]}
+        rehypePlugins={[rehypeKatex]}
         components={{
           code({ inline, className, children, ...props }: { inline?: boolean; className?: string; children?: React.ReactNode }) {
             const match = /language-(\w+)/.exec(className || '');
@@ -209,7 +229,7 @@ export function MarkdownRenderer({ content, className }: MarkdownRendererProps) 
           },
         }}
       >
-        {content}
+        {safeContent}
       </ReactMarkdown>
     </div>
   );
