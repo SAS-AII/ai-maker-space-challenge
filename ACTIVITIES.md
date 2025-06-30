@@ -85,6 +85,24 @@
 
 
 
+### Vibe Check #6
+
+- Testing math formula rendering.
+
+**Question #1** ❓  
+- If a store sells apples in packs of 4 and oranges in packs of 3, how many packs of each are needed to get exactly 12 apples and 9 oranges?
+
+**Aspect Tested** 🔍  
+- Confirms whether math formulas are rendered properly in markdown.
+
+**Initial State** ❌  
+- Math formulas were displayed as raw text.
+
+**Current System Performance** ✅  
+- Math rendering works correctly using libraries like `remarkMath` and `rehypeKatex`.
+
+
+
 
 # Discussion Question #1
 
@@ -96,4 +114,6 @@
 
  - Without automation or formal QA processes, it doesn’t scale well and offers limited reliability for ensuring long-term system quality.
 
- - But I do think that for initial application testing, quickly detecting and correcting obvious errors, above all, saves the entire application a lot of time. This is something I'll continue to use when debugging initial and visible errors. And automating security errors or errors I'm already aware of through Vibe Checking through rules.
+ - I do think that for initial application testing, quickly detecting and correcting obvious errors, above all, saves the entire application a lot of time. This is something I'll continue to use when debugging initial and visible errors.
+
+ - But I prefer to learn and master React/Next.js to implement a good production system that I trust, not something that AI generated and fixed on its own. AI makes a lot of mistakes, including poor security, and sometimes writes very outdated code if we don't remember to include good context and up-to-date documentation.
