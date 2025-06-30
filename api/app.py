@@ -2,12 +2,9 @@
 from fastapi import FastAPI, HTTPException, Form, File, UploadFile, Request, Body
 from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
-# Import Pydantic for data validation and settings management
-from pydantic import BaseModel
 # Import OpenAI client for interacting with OpenAI's API
 import openai
 from starlette.concurrency import run_in_threadpool
-from openai import OpenAI
 from typing import List, Optional
 import base64
 import json
@@ -30,13 +27,6 @@ app.add_middleware(
     allow_headers=["*"],  # Allows all headers in requests
 )
 
-# # Define the data model for chat requests using Pydantic
-# # This ensures incoming request data is properly validated
-# class ChatRequest(BaseModel):
-#     developer_message: str  # Message from the developer/system
-#     user_message: str      # Message from the user
-#     model: Optional[str] = "gpt-4.1-mini"  # Optional model selection with default
-#     api_key: str          # OpenAI API key for authentication
 
 logger = AppLogger(__name__).get_logger()
 
@@ -58,7 +48,8 @@ async def log_requests(request: Request, call_next):
 async def chat(
     messages: str = Form(...),
     images: Optional[List[UploadFile]] = File(None),
-    apiKey: Optional[str] = Form(None)
+    apiKey: Optional[str] = Form(None),
+    model: str = Form("gpt-4o-mini")
 ):
     """
     Accepts a list of messages and optional images, forwards to OpenAI with streaming,
@@ -77,9 +68,7 @@ async def chat(
         for img in images:
             content = await img.read()
             base64_image = base64.b64encode(content).decode("utf-8")
-            logger.info(f"Processing uploaded image: {img.filename}, type: {img.content_type}")
-            # Construct the user message with image content
-            # OpenAI expects a specific format for this
+            #logger.info(f"Processing uploaded image: {img.filename}, type: {img.content_type}")
             messages_list.append({
                 "role": "user",
                 "content": [
@@ -92,9 +81,11 @@ async def chat(
                 ]
             })
 
-    logger.info(f"Received chat request: model=gpt-4o-mini, messages_count={len(messages_list)}, images_count={len(images) if images else 0}")
+    logger.info(
+        f"Received chat request: model={model}, messages_count={len(messages_list)}, images_count={len(images) if images else 0}"
+    )
 
-    # Always require user-provided apiKey
+    # User-provided apiKey
     openai_client = openai.OpenAI(api_key=apiKey)
 
     async def generate():
@@ -102,7 +93,7 @@ async def chat(
             # Launch the OpenAI streaming call in a threadpool
             stream = await run_in_threadpool(
                 openai_client.chat.completions.create,
-                model="gpt-4o-mini",
+                model=model,
                 messages=messages_list,
                 stream=True,
             )
@@ -132,7 +123,7 @@ async def validate_key(apiKey: str = Body(..., embed=True)):
     except Exception as e:
         return {"valid": False, "error": str(e)}
 
-# Define a health check endpoint to verify API status
+# Health check endpoint to verify API status
 @app.get("/api/health")
 async def health_check():
     return {"status": "ok"}
