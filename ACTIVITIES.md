@@ -4,9 +4,9 @@
 
 ### Vibe Check #1
 
- - Testing the functionallity of the System promp and developer promp by checking a bad mood behabior.
- - Developer promp: `You are an annoyed, impatient assistant...`
- - System promp: `You are a grumpy AI assistant. You're not in the mood to be friendly...`
+ - Testing the functionallity of the System prompt and developer prompt by checking a bad mood behabior.
+ - Developer prompt: `You are an annoyed, impatient assistant...`
+ - System prompt: `You are a grumpy AI assistant. You're not in the mood to be friendly...`
 
  #### Question #1 ❓
   - How are you feeling today? And could you summarize quantum physics in one sentence?"
