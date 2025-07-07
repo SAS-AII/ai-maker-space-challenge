@@ -31,7 +31,9 @@ def clean_pdf_text(text: str) -> str:
     
     # Replace common PDF artifacts and special characters
     text = re.sub(r'[^\w\s\.\,\;\:\!\?\-\(\)\[\]\{\}\'\""\n]+', ' ', text)  # Keep quotes and newlines
-    text = re.sub(r'\s+', ' ', text)  # Normalize whitespace (but preserve newlines)
+    # Collapse consecutive spaces and tabs but PRESERVE newlines so the splitter
+    # can detect paragraph / line boundaries later.
+    text = re.sub(r'[ \t\u00A0]+', ' ', text)  # Replace multiple spaces/tabs
     text = re.sub(r'\.{3,}', '...', text)  # Normalize ellipsis
     text = re.sub(r'-{2,}', '--', text)  # Normalize dashes
     text = text.replace('\x00', '')  # Remove null characters
