@@ -434,13 +434,26 @@ None - this is backward compatible and only enhances the existing functionality.
 # Merge Instructions: Fix Button Variant TypeScript Error
 
 ## Overview
-Fixed a TypeScript build error in the KnowledgeManager component where an invalid Button variant `"default"` was being used. The Button component only accepts `"primary"`, `"secondary"`, `"ghost"`, and `"outline"` variants.
+Fixed multiple TypeScript build errors that were preventing Vercel deployment:
+
+1. **KnowledgeManager Button Variant Error**: Invalid Button variant `"default"` was being used
+2. **FileValidator Type Inference Error**: `as const` assertions were causing TypeScript to infer `never` types
 
 ## Changes Made
+
+### 1. Button Variant Fix
 - **File**: `frontend/components/chat/KnowledgeManager.tsx`
 - **Line**: 441
 - **Change**: Changed `variant="default"` to `variant="primary"` for the "Overwrite" button
 - **Reason**: The "Overwrite" action is a primary action in the duplicate file dialog, making `"primary"` the semantically correct variant
+
+### 2. FileValidator Type System Fix  
+- **File**: `frontend/lib/fileValidator.ts`
+- **Changes**:
+  - Replaced `as const` with explicit `Record<string, string[]>` type for `SUPPORTED_FILE_TYPES`
+  - Replaced `as const` with explicit `Record<string, string>` type for `EXTENSION_MAPPING`
+  - Removed unnecessary type assertions (`as keyof typeof`)
+- **Reason**: The `as const` assertions were causing TypeScript to create overly narrow literal types that couldn't be properly narrowed at runtime, leading to `never` type inference errors
 
 ## How to Merge
 
@@ -454,8 +467,8 @@ Fixed a TypeScript build error in the KnowledgeManager component where an invali
    - Go to your GitHub repository
    - Click "New Pull Request"
    - Select `fix/button-variant-typescript-error` → `main`
-   - Title: "Fix: Replace invalid Button variant 'default' with 'primary'"
-   - Add description explaining the TypeScript error fix
+   - Title: "Fix: Resolve multiple TypeScript build errors for Vercel deployment"
+   - Add description explaining both TypeScript error fixes
    - Assign reviewers and merge when approved
 
 ### Option 2: GitHub CLI
@@ -464,8 +477,8 @@ Fixed a TypeScript build error in the KnowledgeManager component where an invali
 git push origin fix/button-variant-typescript-error
 
 # Create and merge PR using GitHub CLI
-gh pr create --title "Fix: Replace invalid Button variant 'default' with 'primary'" \
-  --body "Fixed TypeScript error where 'default' is not a valid Button variant. Changed Overwrite button to use 'primary' variant which resolves Vercel build failure." \
+gh pr create --title "Fix: Resolve multiple TypeScript build errors for Vercel deployment" \
+  --body "Fixed two TypeScript errors: 1) Invalid Button variant 'default' changed to 'primary', 2) FileValidator type inference issues resolved by replacing 'as const' with explicit Record types. Resolves Vercel build failures." \
   --base main \
   --head fix/button-variant-typescript-error
 
