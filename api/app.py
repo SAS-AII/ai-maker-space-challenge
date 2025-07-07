@@ -102,28 +102,22 @@ async def chat(
 
     # Enhanced logic for RAG
     if useRAG and messages_list:
-        # Build a richer RAG query by combining the last few user messages (up to 3)
-        user_query_parts = []  # Collect recent user utterances (most recent first)
+        # Extract latest user message only to form the RAG query (prevents repetition)
+        rag_query = None
         for msg in reversed(messages_list):
-            if msg.get("role") == "user":
-                text_fragment = ""
-                # Handle both plain-text and multimodal messages
-                if isinstance(msg.get("content"), str):
-                    text_fragment = msg["content"]
-                elif isinstance(msg.get("content"), list):
-                    for content_item in msg["content"]:
-                        if content_item.get("type") == "text":
-                            text_fragment = content_item.get("text", "")
-                            break
+            if msg.get("role") != "user":
+                continue
 
-                if text_fragment:
-                    user_query_parts.append(text_fragment.strip())
-                # Stop after collecting three most-recent textual user messages
-                if len(user_query_parts) >= 3:
+            if isinstance(msg.get("content"), str):
+                rag_query = msg["content"].strip()
+                break
+            elif isinstance(msg.get("content"), list):
+                for content_item in msg["content"]:
+                    if content_item.get("type") == "text":
+                        rag_query = content_item.get("text", "").strip()
+                        break
+                if rag_query:
                     break
-
-        # Combine in chronological order (oldest -> newest) so the query reads naturally
-        rag_query = " ".join(reversed(user_query_parts)).strip()
 
         if rag_query:
             try:
