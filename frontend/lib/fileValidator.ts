@@ -10,7 +10,7 @@ export interface FileValidationResult {
 }
 
 // Supported file types with their MIME types and extensions
-const SUPPORTED_FILE_TYPES = {
+const SUPPORTED_FILE_TYPES: Record<string, string[]> = {
   // Documents
   'application/pdf': ['.pdf'],
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
@@ -26,10 +26,10 @@ const SUPPORTED_FILE_TYPES = {
   'application/javascript': ['.js'],
   'text/typescript': ['.ts'],
   'application/typescript': ['.ts'],
-} as const;
+};
 
 // Fallback extension-based validation for files where MIME detection fails
-const EXTENSION_MAPPING = {
+const EXTENSION_MAPPING: Record<string, string> = {
   '.pdf': 'PDF Document',
   '.docx': 'Word Document',
   '.txt': 'Text File',
@@ -38,7 +38,7 @@ const EXTENSION_MAPPING = {
   '.sql': 'SQL Script',
   '.js': 'JavaScript File',
   '.ts': 'TypeScript File',
-} as const;
+};
 
 const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25MB
 
@@ -75,7 +75,7 @@ export const validateFile = (file: File): FileValidationResult => {
     
     // If MIME type is supported, check if it matches the file extension
     if (supportedMimes.includes(mimeType)) {
-      const validExtensionsForMime = SUPPORTED_FILE_TYPES[mimeType as keyof typeof SUPPORTED_FILE_TYPES];
+      const validExtensionsForMime = SUPPORTED_FILE_TYPES[mimeType];
       if (!validExtensionsForMime.includes(extension)) {
         return {
           isValid: false,
@@ -89,7 +89,7 @@ export const validateFile = (file: File): FileValidationResult => {
 
   return {
     isValid: true,
-    fileType: EXTENSION_MAPPING[extension as keyof typeof EXTENSION_MAPPING],
+    fileType: EXTENSION_MAPPING[extension],
   };
 };
 
