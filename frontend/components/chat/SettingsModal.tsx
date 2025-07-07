@@ -5,6 +5,7 @@ import { Textarea } from '@/components/ui/Textarea';
 import { X, Check, Loader2 } from 'lucide-react';
 import { validateApiKey } from '@/lib/api';
 import { useTheme } from '../ThemeProvider';
+import { useAppStore } from '@/lib/store/appStore';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -27,10 +28,15 @@ export function SettingsModal({
   const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
   const [dotCount, setDotCount] = useState(0);
   const { theme, setTheme } = useTheme();
+  
+  // App store for user name and RAG settings
+  const { userName, ragEnabled, setUserName, setRagEnabled } = useAppStore();
+  const [localUserName, setLocalUserName] = useState(userName);
 
   useEffect(() => {
     setFormData(settings);
-  }, [settings]);
+    setLocalUserName(userName);
+  }, [settings, userName]);
 
   // Validate API key when it changes
   useEffect(() => {
@@ -77,7 +83,15 @@ export function SettingsModal({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Save settings
     onSave(formData);
+    
+    // Save user name to app store
+    if (localUserName !== userName) {
+      setUserName(localUserName);
+    }
+    
     onClose();
   };
 
@@ -133,6 +147,54 @@ export function SettingsModal({
 
         {/* Content */}
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
+          {/* Name Field */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Your Name
+            </label>
+            <input
+              type="text"
+              value={localUserName}
+              onChange={(e) => setLocalUserName(e.target.value)}
+              placeholder="Enter your name for the welcome message..."
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              autoComplete="name"
+            />
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              This name will appear in your welcome message: "Welcome to {localUserName}'s Room"
+            </p>
+          </div>
+
+          {/* RAG Toggle */}
+          <div className="flex items-center justify-between">
+            <div>
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                RAG Enabled
+              </label>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                Use uploaded documentation to answer questions
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setRagEnabled(!ragEnabled)}
+              className={`
+                relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900
+                ${ragEnabled ? 'bg-primary-600' : 'bg-gray-200 dark:bg-gray-700'}
+              `}
+              role="switch"
+              aria-checked={ragEnabled}
+              aria-label="Toggle RAG"
+            >
+              <span
+                className={`
+                  inline-block h-4 w-4 transform rounded-full bg-white transition-transform
+                  ${ragEnabled ? 'translate-x-6' : 'translate-x-1'}
+                `}
+              />
+            </button>
+          </div>
+
           {/* Dark Theme Toggle */}
           <div className="flex items-center justify-between">
             <div>
@@ -203,27 +265,25 @@ export function SettingsModal({
               </span>
             </div>
             {apiKeyError && (
-              <p className="text-xs text-red-500 mt-1">{apiKeyError}</p>
+              <p className="text-red-500 dark:text-red-400 text-sm mt-1">{apiKeyError}</p>
             )}
             {apiKeyStatus === 'checking' && (
-              <p className="text-xs text-blue-500 mt-1">Validating your API key{'.'.repeat(dotCount)}</p>
+              <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
+                Validating{'.'.repeat(dotCount)}
+              </p>
             )}
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              You must set your API key to use the chat features. Your API key is saved securely in your browser's local storage.
+              Your API key is stored locally and never sent to our servers
             </p>
           </div>
 
-          {/* Actions */}
-          <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={onClose}
-            >
+          {/* Submit Button */}
+          <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200 dark:border-gray-700">
+            <Button type="button" variant="outline" onClick={onClose}>
               Cancel
             </Button>
-            <Button type="submit">
-              Save & Close
+            <Button type="submit" disabled={apiKeyStatus === 'invalid'}>
+              Save Settings
             </Button>
           </div>
         </form>

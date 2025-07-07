@@ -13,6 +13,11 @@ import { sendChatMessage } from '@/lib/api';
 import { generateId, generateChatTitle } from '@/lib/utils';
 import { Settings as SettingsIcon, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { WelcomeBanner } from '@/features/WelcomeBanner';
+import { KnowledgeUploader } from '@/features/KnowledgeUploader';
+import { useAppStore } from '@/lib/store/appStore';
+import { getSettings, saveSettings } from '@/lib/settings';
+import { getStoredSessions, saveStoredSessions } from '@/lib/sessions';
 
 const DEFAULT_SETTINGS: Settings = {
   developerPrompt: 'You are a friendly, expressive assistant that uses markdown formatting, emojis, and clear structure (headings, bullet points, code blocks) to deliver helpful and engaging answers.',
@@ -26,7 +31,7 @@ export function ChatContainer() {
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
+  const [settings, setSettings] = useState<Settings>(() => getSettings());
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [settingsModalMessage, setSettingsModalMessage] = useState<string>('');
@@ -42,6 +47,10 @@ export function ChatContainer() {
   const [pendingMessage, setPendingMessage] = useState<string>('');
   const [pendingImagesForRetry, setPendingImagesForRetry] = useState<File[]>([]);
   const [useRAG, setUseRAG] = useState(false);
+  const [hasShownWelcome, setHasShownWelcome] = useState(false);
+
+  // App store for RAG settings
+  const { userName, ragEnabled } = useAppStore();
 
   // --- Smooth but throttled scroll helpers ---------------------------------
   // Instead of performing a smooth scroll **on every token**, we debounce the
@@ -72,50 +81,25 @@ export function ChatContainer() {
 
   // Load sessions from localStorage on mount
   useEffect(() => {
-    const savedSessions = localStorage.getItem('chat-sessions');
-    const savedSettings = localStorage.getItem('chat-settings');
-    const savedRAGState = localStorage.getItem('chat-rag-enabled');
+    const storedSessions = getStoredSessions();
+    setSessions(storedSessions);
     
-    if (savedSessions) {
-      const parsedSessions = JSON.parse(savedSessions);
-      setSessions(parsedSessions);
-      
-      if (parsedSessions.length > 0) {
-        setCurrentSessionId(parsedSessions[0].id);
-      }
-    }
-    
-    if (savedSettings) {
-      const parsedSettings = JSON.parse(savedSettings);
-      // Merge saved settings with defaults to ensure all fields exist
-      setSettings({
-        ...DEFAULT_SETTINGS,
-        ...parsedSettings,
-      });
-    }
-    
-    // Load RAG state
-    if (savedRAGState) {
-      setUseRAG(JSON.parse(savedRAGState));
+    if (storedSessions.length > 0) {
+      setCurrentSessionId(storedSessions[0].id);
     }
   }, []);
 
   // Save sessions to localStorage whenever they change
   useEffect(() => {
     if (sessions.length > 0) {
-      localStorage.setItem('chat-sessions', JSON.stringify(sessions));
+      saveStoredSessions(sessions);
     }
   }, [sessions]);
 
   // Save settings to localStorage whenever they change
   useEffect(() => {
-    localStorage.setItem('chat-settings', JSON.stringify(settings));
+    saveSettings(settings);
   }, [settings]);
-
-  // Save RAG state to localStorage whenever it changes
-  useEffect(() => {
-    localStorage.setItem('chat-rag-enabled', JSON.stringify(useRAG));
-  }, [useRAG]);
 
   // Track user scroll position to control auto-scroll
   useEffect(() => {
@@ -276,6 +260,14 @@ export function ChatContainer() {
     };
     setSessions(prev => [newSession, ...prev]);
     setCurrentSessionId(newSession.id);
+    
+    // Reset welcome banner for new chat
+    setHasShownWelcome(false);
+
+    // Auto-collapse sidebar on mobile after creating new chat
+    if (window.innerWidth < 768) {
+      setIsSidebarCollapsed(true);
+    }
   };
 
   const deleteSession = (sessionId: string) => {
@@ -455,7 +447,7 @@ export function ChatContainer() {
     setSettings(newSettings);
     
     // Immediately save to localStorage for persistence
-    localStorage.setItem('chat-settings', JSON.stringify(newSettings));
+    saveSettings(newSettings);
     
     // If the modal was opened due to missing API key, close the message if key is now set
     if (newSettings.apiKey) {
@@ -549,6 +541,33 @@ export function ChatContainer() {
     }
   };
 
+  // Handle RAG disabled message
+  const handleRagDisabledMessage = () => {
+    if (!ragEnabled && currentSession && currentSession.messages.length > 0) {
+      const lastMessage = currentSession.messages[currentSession.messages.length - 1];
+      if (lastMessage.role === 'user') {
+        // Add system response for RAG disabled
+        const ragDisabledMessage: Message = {
+          role: 'assistant',
+          content: 'RAG disabled; I have no context to answer.',
+          timestamp: new Date().toISOString(),
+        };
+
+        setSessions((prev) =>
+          prev.map((s) =>
+            s.id === currentSession.id
+              ? {
+                  ...s,
+                  messages: [...s.messages, ragDisabledMessage],
+                  updatedAt: new Date().toISOString(),
+                }
+              : s
+          )
+        );
+      }
+    }
+  };
+
   return (
     <div className="h-screen flex bg-white dark:bg-gray-900">
       {/* Sidebar */}
@@ -595,19 +614,25 @@ export function ChatContainer() {
             {/* RAG Toggle */}
             <div className="hidden md:flex items-center gap-2">
               <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                RAG
+                RAG Enabled
               </label>
               <input
                 type="checkbox"
-                checked={useRAG}
-                onChange={(e) => setUseRAG(e.target.checked)}
+                checked={ragEnabled}
+                onChange={(e) => {
+                  // Update via app store, which will persist to localStorage
+                  useAppStore.getState().setRagEnabled(e.target.checked);
+                  if (!e.target.checked) {
+                    handleRagDisabledMessage();
+                  }
+                }}
                 className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
               />
             </div>
           </div>
           {/* Center - Title */}
           <h1 className="absolute left-1/2 -translate-x-1/2 text-base sm:text-xl font-semibold text-gray-900 dark:text-gray-100 truncate px-2 max-w-[60vw] sm:max-w-[420px] lg:max-w-[600px]">
-            {currentSession?.title || 'AI Chat'}
+            The Code Room
           </h1>
           {/* Right side - Settings and Theme Toggle */}
           <div className="flex items-center gap-2">
@@ -631,6 +656,14 @@ export function ChatContainer() {
             <ErrorBanner onRetry={handleRetryLastPrompt} lastPrompt={lastPrompt} />
             {currentSession ? (
               <div className="space-y-4">
+                {/* Welcome Banner for new chats */}
+                {isNewEmptyChat && !hasShownWelcome && (
+                  <WelcomeBanner
+                    isNewChat={true}
+                    onAnimationComplete={() => setHasShownWelcome(true)}
+                  />
+                )}
+                
                 {currentSession.messages.map((message, index) => {
                   const prevMsg = index > 0 ? currentSession.messages[index - 1] : undefined;
                   const originPrompt = message.role === 'assistant' && prevMsg?.role === 'user' ? prevMsg.content : '';
@@ -651,8 +684,8 @@ export function ChatContainer() {
             ) : (
               <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
                 <div className="text-center">
-                  <h3 className="text-lg font-medium mb-2">Welcome to AI Chat</h3>
-                  <p className="text-sm">Start a new conversation to begin chatting with the AI.</p>
+                  <h3 className="text-lg font-medium mb-2">Welcome to The Code Room</h3>
+                  <p className="text-sm">Start a new conversation to begin chatting with your documentation assistant.</p>
                 </div>
               </div>
             )}
@@ -663,20 +696,10 @@ export function ChatContainer() {
         {currentSession && (
           <>
             {/* For new empty chats on larger screens - centered layout */}
-            {isNewEmptyChat && (
+            {isNewEmptyChat && hasShownWelcome && (
               <div className="hidden xl:flex flex-col items-center justify-center flex-1 px-4 md:px-6">
                 <div className="w-full max-w-4xl">
-                  {/* Question above input */}
-                  <div className="text-center mb-8">
-                    <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
-                      How can I help you today?
-                    </h2>
-                    <p className="text-gray-600 dark:text-gray-400">
-                      Ask me anything, and I&apos;ll do my best to assist you.
-                    </p>
-                  </div>
-                  
-                  {/* Centered input container with exact same styling */}
+                  {/* Centered input container */}
                   <div className="w-full">
                     <ChatInput
                       onSendMessage={handleSendMessage}
@@ -700,40 +723,21 @@ export function ChatContainer() {
               </div>
             )}
             
-            {/* Mobile / tablet: fixed input at bottom; desktop: as before */}
-            <div
-              className={`${isNewEmptyChat ? 'xl:hidden' : ''} w-full p-4 md:p-6 pb-4 md:relative md:max-w-4xl md:mx-auto fixed bottom-0 left-0 right-0 z-30 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700`}
-            >
-              {/* Question for new empty chats on mobile/tablet */}
-              {isNewEmptyChat && (
-                <div className="text-center mb-6">
-                  <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
-                    How can I help you today?
-                  </h2>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Ask me anything, and I&apos;ll do my best to assist you.
-                  </p>
-                </div>
-              )}
-              
-              <ChatInput
-                onSendMessage={handleSendMessage}
-                disabled={isTyping}
-                selectedModel={currentSession.model || settings.model}
-                onModelChange={handleSessionModelChange}
-                selectedImages={selectedImages}
-                previewUrls={previewUrls}
-                onImageUpload={handleImageUpload}
-                onRemoveImage={removeImage}
-              />
-              
-              {/* Disclaimer text - only on larger screens */}
-              <div className="hidden md:block mt-4 text-center">
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  This chat can make mistakes. Don&apos;t fully trust it. :D
-                </p>
+            {/* Standard sticky input for chats with messages or smaller screens */}
+            {(!isNewEmptyChat || !hasShownWelcome) && (
+              <div className="sticky bottom-0 w-full">
+                <ChatInput
+                  onSendMessage={handleSendMessage}
+                  disabled={isTyping}
+                  selectedModel={currentSession.model || settings.model}
+                  onModelChange={handleSessionModelChange}
+                  selectedImages={selectedImages}
+                  previewUrls={previewUrls}
+                  onImageUpload={handleImageUpload}
+                  onRemoveImage={removeImage}
+                />
               </div>
-            </div>
+            )}
           </>
         )}
       </div>
@@ -744,7 +748,7 @@ export function ChatContainer() {
         onClose={() => { setIsSettingsOpen(false); setSettingsModalMessage(''); }}
         settings={settings}
         onSave={handleSaveSettings}
-        message={settingsModalMessage}
+        message={!settings.apiKey ? 'Please set your OpenAI API key to start chatting.' : ''}
       />
     </div>
   );

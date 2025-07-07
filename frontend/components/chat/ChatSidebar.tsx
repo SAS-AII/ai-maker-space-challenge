@@ -4,7 +4,7 @@ import { formatDate } from '@/lib/utils';
 import { Button } from '@/components/ui/Button';
 import { PenLine, Trash2, ArrowLeftFromLine, ArrowRightFromLine, BookOpen, Upload } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { KnowledgeManager } from './KnowledgeManager';
+import { KnowledgeUploader } from '@/features/KnowledgeUploader';
 
 interface ChatSidebarProps {
   sessions: ChatSession[];
@@ -89,7 +89,7 @@ export function ChatSidebar({
           <div className="p-4 border-t border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                Knowledge Base
+                Knowledge Base (Code + Docs)
               </h3>
               <Button
                 variant="ghost"
@@ -102,8 +102,11 @@ export function ChatSidebar({
             </div>
             
             {showKnowledgeManager && (
-              <KnowledgeManager
+              <KnowledgeUploader
                 onUploadComplete={handleUploadComplete}
+                onUploadError={(filename, error) => {
+                  console.error(`Upload error for ${filename}:`, error);
+                }}
                 className="mb-4"
               />
             )}
@@ -115,7 +118,7 @@ export function ChatSidebar({
               className="w-full"
             >
               <Upload size={16} className="mr-2" />
-              {showKnowledgeManager ? 'Hide Manager' : 'Manage Knowledge'}
+              {showKnowledgeManager ? 'Hide Uploader' : 'Upload Files'}
             </Button>
           </div>
         )}

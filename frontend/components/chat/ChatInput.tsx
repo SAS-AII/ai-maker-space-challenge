@@ -20,7 +20,7 @@ interface ChatInputProps {
 export function ChatInput({ 
   onSendMessage, 
   disabled = false, 
-  placeholder = "Ask me anything...",
+  placeholder = "You can ask me to create things based on your current workload, or check if there is deprecated code among your projects …",
   selectedModel,
   onModelChange,
   selectedImages = [],
@@ -43,9 +43,17 @@ export function ChatInput({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSubmit(e);
+    // Support both Enter (legacy) and Cmd/Ctrl+Enter for sending
+    if (e.key === 'Enter') {
+      if (!e.shiftKey && !(e.metaKey || e.ctrlKey)) {
+        // Regular Enter still works
+        e.preventDefault();
+        handleSubmit(e);
+      } else if (e.metaKey || e.ctrlKey) {
+        // Cmd/Ctrl+Enter also works
+        e.preventDefault();
+        handleSubmit(e);
+      }
     }
   };
 
@@ -143,6 +151,11 @@ export function ChatInput({
             </Button>
           </div>
         </div>
+
+        {/* Keyboard shortcut hint */}
+        <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
+          Press Enter or {navigator.platform.includes('Mac') ? 'Cmd' : 'Ctrl'}+Enter to send
+        </p>
       </form>
     </div>
   );
