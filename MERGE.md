@@ -434,10 +434,11 @@ None - this is backward compatible and only enhances the existing functionality.
 # Merge Instructions: Fix Button Variant TypeScript Error
 
 ## Overview
-Fixed multiple TypeScript build errors that were preventing Vercel deployment:
+Fixed multiple build and deployment issues that were preventing successful Vercel deployment:
 
 1. **KnowledgeManager Button Variant Error**: Invalid Button variant `"default"` was being used
-2. **FileValidator Type Inference Error**: `as const` assertions were causing TypeScript to infer `never` types
+2. **FileValidator Type Inference Error**: `as const` assertions were causing TypeScript to infer `never` types  
+3. **Content Security Policy Error**: CSP was blocking frontend-backend API communication
 
 ## Changes Made
 
@@ -455,6 +456,15 @@ Fixed multiple TypeScript build errors that were preventing Vercel deployment:
   - Removed unnecessary type assertions (`as keyof typeof`)
 - **Reason**: The `as const` assertions were causing TypeScript to create overly narrow literal types that couldn't be properly narrowed at runtime, leading to `never` type inference errors
 
+### 3. Content Security Policy & API Communication Fix
+- **Files**: `frontend/next.config.js`, `frontend/lib/api.ts`, `frontend/vercel.json` (deleted)
+- **Changes**:
+  - Updated CSP `connect-src` to allow `https://*.vercel.app` connections
+  - Modified API client to use relative URLs in production (`/api/*` instead of absolute URLs)
+  - Removed conflicting `frontend/vercel.json` since root `vercel.json` handles monorepo routing
+  - Fixed rewrites to only apply in development mode
+- **Reason**: The CSP was blocking same-origin API calls in production, causing "Refused to connect because it violates CSP" errors. Frontend and backend are deployed to the same domain, so relative URLs work correctly.
+
 ## How to Merge
 
 ### Option 1: GitHub Pull Request (Recommended)
@@ -467,8 +477,8 @@ Fixed multiple TypeScript build errors that were preventing Vercel deployment:
    - Go to your GitHub repository
    - Click "New Pull Request"
    - Select `fix/button-variant-typescript-error` → `main`
-   - Title: "Fix: Resolve multiple TypeScript build errors for Vercel deployment"
-   - Add description explaining both TypeScript error fixes
+   - Title: "Fix: Resolve TypeScript errors and CSP issues for Vercel deployment"
+   - Add description explaining TypeScript fixes and CSP/API communication fixes
    - Assign reviewers and merge when approved
 
 ### Option 2: GitHub CLI
@@ -477,8 +487,8 @@ Fixed multiple TypeScript build errors that were preventing Vercel deployment:
 git push origin fix/button-variant-typescript-error
 
 # Create and merge PR using GitHub CLI
-gh pr create --title "Fix: Resolve multiple TypeScript build errors for Vercel deployment" \
-  --body "Fixed two TypeScript errors: 1) Invalid Button variant 'default' changed to 'primary', 2) FileValidator type inference issues resolved by replacing 'as const' with explicit Record types. Resolves Vercel build failures." \
+gh pr create --title "Fix: Resolve TypeScript errors and CSP issues for Vercel deployment" \
+  --body "Fixed multiple deployment issues: 1) Invalid Button variant, 2) FileValidator type inference errors, 3) Content Security Policy blocking API calls. Frontend and backend now communicate properly in production." \
   --base main \
   --head fix/button-variant-typescript-error
 
@@ -487,12 +497,17 @@ gh pr merge --squash
 ```
 
 ## Verification
-After merging, verify the fix by:
-1. Deploying to Vercel (should now build successfully)
-2. Testing the Knowledge Manager duplicate file dialog to ensure the "Overwrite" button still functions correctly
+After merging, verify the fixes by:
+1. Deploying to Vercel (should now build successfully without TypeScript errors)
+2. Testing frontend-backend communication (health check should pass, no CSP errors in console)
+3. Testing the Knowledge Manager duplicate file dialog to ensure the "Overwrite" button functions correctly
+4. Verifying API calls work correctly (chat, knowledge upload, etc.)
 
 ## Impact
-- ✅ Resolves Vercel build failure
-- ✅ Maintains existing functionality
+- ✅ Resolves Vercel build failures (TypeScript errors)
+- ✅ Fixes frontend-backend API communication in production
+- ✅ Eliminates Content Security Policy violations
+- ✅ Maintains all existing functionality
 - ✅ Uses semantically correct button variant
+- ✅ Optimizes development vs production configurations
 - ✅ No breaking changes 
