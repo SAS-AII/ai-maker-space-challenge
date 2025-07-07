@@ -365,3 +365,68 @@ For issues or questions about this integration:
 **Branch:** `feature/qdrant-rag-integration`  
 **Created:** $(date)  
 **Ready for:** Production deployment 
+
+# Merge Instructions: Improved Loading Animation and Stop Button
+
+## Feature Summary
+This branch implements improved loading animations and a stop button for chat generation:
+
+- **Better Loading Animation**: Replaced the invisible "..." with a visible animated loading indicator showing three pulsing dots and "Thinking..." text
+- **Stop Button**: Added ability to stop model generation mid-stream with a red Stop button that appears next to Send
+- **AbortController Support**: Implemented proper request cancellation using AbortController
+- **Improved UX**: Better visual feedback during generation and user control over the process
+
+## Files Changed
+- `frontend/components/chat/LoadingIndicator.tsx` (new)
+- `frontend/components/chat/ChatMessage.tsx`
+- `frontend/components/chat/ChatInput.tsx`
+- `frontend/components/chat/ChatContainer.tsx`
+- `frontend/lib/api.ts`
+
+## How to Merge
+
+### Option 1: GitHub PR Route
+1. Push the branch to GitHub:
+   ```bash
+   git push origin feature/improved-loading-and-stop-button
+   ```
+
+2. Create a Pull Request:
+   - Go to the GitHub repository
+   - Click "Compare & pull request" 
+   - Title: "Implement improved loading animation and stop button functionality"
+   - Add description with feature details
+   - Request review if needed
+   - Merge when approved
+
+### Option 2: GitHub CLI Route
+1. Push the branch:
+   ```bash
+   git push origin feature/improved-loading-and-stop-button
+   ```
+
+2. Create and merge PR using GitHub CLI:
+   ```bash
+   # Create PR
+   gh pr create --title "Implement improved loading animation and stop button functionality" \
+     --body "This PR adds a better loading animation to replace the invisible '...' and implements a stop button to cancel generation mid-stream. Includes proper AbortController support for clean cancellation."
+   
+   # Review and merge (after any approvals)
+   gh pr merge --squash --delete-branch
+   ```
+
+3. Switch back to main and pull:
+   ```bash
+   git checkout main
+   git pull origin main
+   ```
+
+## Testing Recommendations
+1. Test the new loading animation appears when model is responding
+2. Verify the Stop button appears and functions correctly
+3. Ensure stopping mid-generation works cleanly
+4. Test that normal send/receive flow still works
+5. Verify the loading animation is visible in Firefox (addressing the original issue)
+
+## Breaking Changes
+None - this is backward compatible and only enhances the existing functionality. 
