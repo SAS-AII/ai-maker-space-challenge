@@ -74,6 +74,7 @@ export function ChatContainer() {
   useEffect(() => {
     const savedSessions = localStorage.getItem('chat-sessions');
     const savedSettings = localStorage.getItem('chat-settings');
+    const savedRAGState = localStorage.getItem('chat-rag-enabled');
     
     if (savedSessions) {
       const parsedSessions = JSON.parse(savedSessions);
@@ -92,6 +93,11 @@ export function ChatContainer() {
         ...parsedSettings,
       });
     }
+    
+    // Load RAG state
+    if (savedRAGState) {
+      setUseRAG(JSON.parse(savedRAGState));
+    }
   }, []);
 
   // Save sessions to localStorage whenever they change
@@ -105,6 +111,11 @@ export function ChatContainer() {
   useEffect(() => {
     localStorage.setItem('chat-settings', JSON.stringify(settings));
   }, [settings]);
+
+  // Save RAG state to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('chat-rag-enabled', JSON.stringify(useRAG));
+  }, [useRAG]);
 
   // Track user scroll position to control auto-scroll
   useEffect(() => {

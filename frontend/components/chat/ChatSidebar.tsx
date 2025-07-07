@@ -4,7 +4,7 @@ import { formatDate } from '@/lib/utils';
 import { Button } from '@/components/ui/Button';
 import { PenLine, Trash2, ArrowLeftFromLine, ArrowRightFromLine, BookOpen, Upload } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { KnowledgeUploader } from './KnowledgeUploader';
+import { KnowledgeManager } from './KnowledgeManager';
 
 interface ChatSidebarProps {
   sessions: ChatSession[];
@@ -25,7 +25,7 @@ export function ChatSidebar({
   onNewChat,
   onDeleteSession,
 }: ChatSidebarProps) {
-  const [showKnowledgeUploader, setShowKnowledgeUploader] = useState(false);
+  const [showKnowledgeManager, setShowKnowledgeManager] = useState(false);
 
   const handleUploadComplete = (filename: string, result: any) => {
     console.log('Knowledge uploaded:', filename, result);
@@ -94,15 +94,15 @@ export function ChatSidebar({
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => setShowKnowledgeUploader(!showKnowledgeUploader)}
+                onClick={() => setShowKnowledgeManager(!showKnowledgeManager)}
                 className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
               >
                 <BookOpen size={16} />
               </Button>
             </div>
             
-            {showKnowledgeUploader && (
-              <KnowledgeUploader
+            {showKnowledgeManager && (
+              <KnowledgeManager
                 onUploadComplete={handleUploadComplete}
                 className="mb-4"
               />
@@ -111,11 +111,11 @@ export function ChatSidebar({
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setShowKnowledgeUploader(!showKnowledgeUploader)}
+              onClick={() => setShowKnowledgeManager(!showKnowledgeManager)}
               className="w-full"
             >
               <Upload size={16} className="mr-2" />
-              {showKnowledgeUploader ? 'Hide Uploader' : 'Add Knowledge'}
+              {showKnowledgeManager ? 'Hide Manager' : 'Manage Knowledge'}
             </Button>
           </div>
         )}

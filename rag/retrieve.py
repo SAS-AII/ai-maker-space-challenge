@@ -20,7 +20,7 @@ class DocumentRetriever:
         self, 
         query: str, 
         limit: int = 5,
-        score_threshold: float = 0.75
+        score_threshold: float = 0.5
     ) -> List[Dict[str, Any]]:
         """
         Search for documents similar to the query
@@ -59,6 +59,8 @@ class DocumentRetriever:
                 })
             
             logger.info(f"Found {len(results)} documents for query: {query[:50]}...")
+            for i, result in enumerate(results):
+                logger.info(f"Result {i+1}: {result['filename']} (score: {result['similarity_score']:.3f}) - {result['content'][:100]}...")
             return results
             
         except Exception as e:
@@ -86,7 +88,7 @@ class DocumentRetriever:
         relevant_docs = await self.search_similar_documents(
             query=query,
             limit=max_chunks,
-            score_threshold=0.75
+            score_threshold=0.5
         )
         
         if not relevant_docs:
