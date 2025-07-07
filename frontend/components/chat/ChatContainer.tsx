@@ -27,8 +27,8 @@ export function ChatContainer() {
   const [settings, setSettings] = useState<Settings>(() => getSettings());
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const [_settingsModalMessage, setSettingsModalMessage] = useState<string>('');
   const [lastPrompt, setLastPrompt] = useState<string>('');
+  const [, setSettingsModalMessage] = useState<string>('');
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const [isDragging, setIsDragging] = useState(false);
@@ -40,7 +40,7 @@ export function ChatContainer() {
   const [pendingMessage, setPendingMessage] = useState<string>('');
   const [pendingImagesForRetry, setPendingImagesForRetry] = useState<File[]>([]);
   const [hasShownWelcome, setHasShownWelcome] = useState(false);
-  const [_titleGeneratedByAI, setTitleGeneratedByAI] = useState<Record<string, boolean>>({});
+  const [, setTitleGeneratedByAI] = useState<Record<string, boolean>>({});
   const [abortController, setAbortController] = useState<AbortController | null>(null);
 
   // App store for RAG settings
