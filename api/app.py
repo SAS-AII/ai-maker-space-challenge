@@ -102,24 +102,30 @@ async def chat(
 
     # Enhanced logic for RAG
     if useRAG and messages_list:
-        # Get the last user message for RAG
-        last_user_message = None
+        # Build a richer RAG query by combining the last few user messages (up to 3)
+        user_query_parts = []  # Collect recent user utterances (most recent first)
         for msg in reversed(messages_list):
             if msg.get("role") == "user":
-                # Handle both text and image messages
+                text_fragment = ""
+                # Handle both plain-text and multimodal messages
                 if isinstance(msg.get("content"), str):
-                    last_user_message = msg["content"]
-                    break
+                    text_fragment = msg["content"]
                 elif isinstance(msg.get("content"), list):
-                    # Find text content in multi-modal messages
                     for content_item in msg["content"]:
                         if content_item.get("type") == "text":
-                            last_user_message = content_item.get("text", "")
+                            text_fragment = content_item.get("text", "")
                             break
-                    if last_user_message:
-                        break
-        
-        if last_user_message:
+
+                if text_fragment:
+                    user_query_parts.append(text_fragment.strip())
+                # Stop after collecting three most-recent textual user messages
+                if len(user_query_parts) >= 3:
+                    break
+
+        # Combine in chronological order (oldest -> newest) so the query reads naturally
+        rag_query = " ".join(reversed(user_query_parts)).strip()
+
+        if rag_query:
             try:
                 # First check if knowledge base has any documents
                 from core.qdrant_client import get_qdrant
@@ -136,7 +142,7 @@ async def chat(
                 else:
                     # Get context from knowledge base with improved parameters
                     context_data = await document_retriever.get_context_for_query(
-                        query=last_user_message,
+                        query=rag_query,
                         max_chunks=8,  # Increased from 5
                         max_chars=6000,  # Increased from 4000
                         score_threshold=0.3  # Lowered threshold for better retrieval
@@ -149,7 +155,7 @@ async def chat(
                             context=context_data["context"],
                             context_count=context_data["context_count"],
                             similarity_scores=context_data["similarity_scores"],
-                            user_query=last_user_message
+                            user_query=rag_query
                         )
                         
                         # Replace messages with RAG-enhanced versions
