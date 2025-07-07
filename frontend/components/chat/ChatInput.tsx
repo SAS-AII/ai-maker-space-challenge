@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/Button';
-import { Send, Image as LucideImage, X } from 'lucide-react';
+import { Send, Image as LucideImage, X, Square } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { MobilePreferences } from './MobilePreferences';
 import NextImage from 'next/image';
@@ -15,6 +15,8 @@ interface ChatInputProps {
   previewUrls?: string[];
   onImageUpload?: (files: FileList | null) => void;
   onRemoveImage?: (index: number) => void;
+  isGenerating?: boolean;
+  onStopGeneration?: () => void;
 }
 
 export function ChatInput({ 
@@ -26,7 +28,9 @@ export function ChatInput({
   selectedImages = [],
   previewUrls = [],
   onImageUpload,
-  onRemoveImage
+  onRemoveImage,
+  isGenerating = false,
+  onStopGeneration
 }: ChatInputProps) {
   const [message, setMessage] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -140,15 +144,30 @@ export function ChatInput({
               </div>
             )}
             
-            <Button
-              type="submit"
-              size="sm"
-              disabled={disabled || (!message.trim() && selectedImages.length === 0)}
-              aria-label="Send message"
-            >
-              <Send size={20} className="sm:mr-2" />
-              <span className="hidden sm:inline">Send</span>
-            </Button>
+            {isGenerating ? (
+              <Button
+                type="button"
+                size="sm"
+                variant="secondary"
+                onClick={onStopGeneration}
+                disabled={disabled}
+                aria-label="Stop generation"
+                className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300"
+              >
+                <Square size={20} className="sm:mr-2" />
+                <span className="hidden sm:inline">Stop</span>
+              </Button>
+            ) : (
+              <Button
+                type="submit"
+                size="sm"
+                disabled={disabled || (!message.trim() && selectedImages.length === 0)}
+                aria-label="Send message"
+              >
+                <Send size={20} className="sm:mr-2" />
+                <span className="hidden sm:inline">Send</span>
+              </Button>
+            )}
           </div>
         </div>
 

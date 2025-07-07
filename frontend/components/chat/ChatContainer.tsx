@@ -49,6 +49,7 @@ export function ChatContainer() {
   const [pendingImagesForRetry, setPendingImagesForRetry] = useState<File[]>([]);
   const [hasShownWelcome, setHasShownWelcome] = useState(false);
   const [titleGeneratedByAI, setTitleGeneratedByAI] = useState<Record<string, boolean>>({});
+  const [abortController, setAbortController] = useState<AbortController | null>(null);
 
   // App store for RAG settings
   const { userName, ragEnabled } = useAppStore();
@@ -328,6 +329,10 @@ export function ChatContainer() {
 
     setIsTyping(true);
 
+    // Create abort controller for this request
+    const controller = new AbortController();
+    setAbortController(controller);
+
     try {
       // Prepare messages for API call
       const allMessages: Message[] = [
@@ -355,7 +360,7 @@ export function ChatContainer() {
       // Include RAG setting from global store
       formData.set('useRAG', ragEnabled.toString());
 
-      const stream = await sendChatMessage(formData);
+      const stream = await sendChatMessage(formData, controller.signal);
 
       const reader = stream.getReader();
       const decoder = new TextDecoder();
@@ -405,7 +410,13 @@ export function ChatContainer() {
     } catch (error) {
       console.error('Error sending message:', error);
       
-      // Add error message
+      // Check if this was an abort error (user stopped generation)
+      if (error instanceof Error && error.name === 'AbortError') {
+        // Don't add error message for user-initiated stops
+        return true;
+      }
+      
+      // Add error message for actual errors
       const errorMessage: Message = {
         role: 'assistant',
         content: 'Sorry, I encountered an error. Please try again.',
@@ -422,7 +433,8 @@ export function ChatContainer() {
         return session;
       }));
     } finally {
-      // Stop the typing indicator
+      // Clean up abort controller and stop typing indicator
+      setAbortController(null);
       setIsTyping(false);
 
       // Kick-off background title generation *after* the main reply finished.
@@ -444,6 +456,36 @@ export function ChatContainer() {
   const handleRetryPrompt = (prompt: string) => {
     if (prompt) {
       handleSendMessage(prompt, []);
+    }
+  };
+
+  const handleStopGeneration = () => {
+    if (abortController) {
+      abortController.abort();
+      setAbortController(null);
+      setIsTyping(false);
+      
+      // Add a message indicating the generation was stopped
+      if (currentSessionId) {
+        setSessions(prev => prev.map(session => {
+          if (session.id === currentSessionId) {
+            const updatedMessages = [...session.messages];
+            const lastMessage = updatedMessages[updatedMessages.length - 1];
+            if (lastMessage.role === 'assistant' && !lastMessage.content.trim()) {
+              // Remove empty assistant message if no content was generated
+              updatedMessages.pop();
+            } else if (lastMessage.role === 'assistant') {
+              // Mark the message as interrupted
+              lastMessage.content += '\n\n*[Generation stopped by user]*';
+            }
+            return {
+              ...session,
+              messages: updatedMessages,
+            };
+          }
+          return session;
+        }));
+      }
     }
   };
 
@@ -719,6 +761,8 @@ export function ChatContainer() {
                       previewUrls={previewUrls}
                       onImageUpload={handleImageUpload}
                       onRemoveImage={removeImage}
+                      isGenerating={isTyping}
+                      onStopGeneration={handleStopGeneration}
                     />
                   </div>
                   
@@ -745,6 +789,8 @@ export function ChatContainer() {
                     previewUrls={previewUrls}
                     onImageUpload={handleImageUpload}
                     onRemoveImage={removeImage}
+                    isGenerating={isTyping}
+                    onStopGeneration={handleStopGeneration}
                   />
                 </div>
               </div>

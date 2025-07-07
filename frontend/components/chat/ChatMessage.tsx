@@ -6,6 +6,7 @@ import NextImage from 'next/image';
 import { MarkdownRenderer } from './MarkdownRenderer';
 import { CopyEntireResponseButton } from './CopyEntireResponseButton';
 import { ResponseActions } from './ResponseActions';
+import { LoadingIndicator } from './LoadingIndicator';
 
 interface ChatMessageProps {
   message: Message;
@@ -66,9 +67,15 @@ export function ChatMessage({ message, isTyping = false, onRetry, currentModel, 
             // Assistant message with markdown rendering and no bubble
             <div className="w-full">
               <MarkdownRenderer 
-                content={message.content + (isTyping ? '...' : '')} 
+                content={message.content} 
                 className="text-gray-900 dark:text-gray-100"
               />
+              {/* Show loading indicator when typing */}
+              {isTyping && (
+                <div className="mt-2 mb-3">
+                  <LoadingIndicator size="sm" />
+                </div>
+              )}
               {/* Action bar */}
               <div className="flex items-center gap-3 mt-3">
                 <CopyEntireResponseButton markdown={message.content} />
