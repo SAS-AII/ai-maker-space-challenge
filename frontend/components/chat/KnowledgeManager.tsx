@@ -438,7 +438,7 @@ export function KnowledgeManager({
                 Skip
               </Button>
               <Button
-                variant="default"
+                variant="primary"
                 onClick={handleOverwrite}
               >
                 Overwrite
