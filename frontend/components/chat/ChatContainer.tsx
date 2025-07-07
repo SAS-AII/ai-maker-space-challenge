@@ -327,6 +327,23 @@ export function ChatContainer() {
     setSelectedImages([]);
     setPreviewUrls([]);
 
+    // Add initial assistant message immediately to show loading animation
+    const assistantMessageObj: Message = {
+      role: 'assistant',
+      content: '',
+      timestamp: new Date().toISOString(),
+    };
+
+    setSessions(prev => prev.map(session => {
+      if (session.id === currentSessionId) {
+        return {
+          ...session,
+          messages: [...session.messages, assistantMessageObj],
+        };
+      }
+      return session;
+    }));
+
     setIsTyping(true);
 
     // Create abort controller for this request
@@ -365,23 +382,6 @@ export function ChatContainer() {
       const reader = stream.getReader();
       const decoder = new TextDecoder();
       let assistantMessage = '';
-
-      // Add initial assistant message
-      const assistantMessageObj: Message = {
-        role: 'assistant',
-        content: '',
-        timestamp: new Date().toISOString(),
-      };
-
-      setSessions(prev => prev.map(session => {
-        if (session.id === currentSessionId) {
-          return {
-            ...session,
-            messages: [...session.messages, assistantMessageObj],
-          };
-        }
-        return session;
-      }));
 
       // Read stream
       while (true) {

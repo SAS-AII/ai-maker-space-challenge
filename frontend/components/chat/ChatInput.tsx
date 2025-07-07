@@ -150,7 +150,7 @@ export function ChatInput({
                 size="sm"
                 variant="secondary"
                 onClick={onStopGeneration}
-                disabled={disabled}
+                disabled={!onStopGeneration}
                 aria-label="Stop generation"
                 className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300"
               >
