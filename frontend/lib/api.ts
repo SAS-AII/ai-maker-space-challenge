@@ -1,5 +1,9 @@
 // API configuration
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+// In production, use relative URLs since frontend and backend are on the same domain
+// In development, use the environment variable or fallback to localhost
+const API_BASE_URL = process.env.NODE_ENV === 'production' 
+  ? '' // Use relative URLs in production
+  : process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
 
 export async function sendChatMessage(formData: FormData, signal?: AbortSignal): Promise<ReadableStream<Uint8Array>> {
   const response = await fetch(`${API_BASE_URL}/api/chat`, {
