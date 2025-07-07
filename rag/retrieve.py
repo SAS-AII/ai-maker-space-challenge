@@ -43,7 +43,13 @@ class DocumentRetriever:
             r"habla sobre",
             r"menciona",
             r"describe",
-            r"explica"
+            r"explica",
+            # Code/example queries
+            r"json example",
+            r"example request body",
+            r"python example",
+            r"code sample",
+            r"curl",
         ]
         
         # If query matches chapter pattern, add variations
@@ -178,7 +184,7 @@ class DocumentRetriever:
         query: str, 
         max_chunks: int = 8,  # Increased from 5
         max_chars: int = 6000,  # Increased from 4000
-        score_threshold: float = 0.3  # Lowered from 0.5
+        score_threshold: float = 0.15  # Further lowered to capture more matches
     ) -> Dict[str, Any]:
         """
         Get formatted context for RAG generation with improved retrieval

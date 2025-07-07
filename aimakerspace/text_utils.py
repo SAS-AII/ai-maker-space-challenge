@@ -138,8 +138,7 @@ class MarkdownLoader(TextFileLoader):
             # Remove YAML front-matter if present
             text = re.sub(r"^---[\s\S]*?---\s+", "", text, flags=re.MULTILINE)
 
-            # Remove fenced code blocks to keep narrative text lightweight
-            text = re.sub(r"```[\s\S]*?```", "", text, flags=re.MULTILINE)
+            # KEEP fenced code blocks – they are valuable for code examples
 
             self.documents.append(text)
 
