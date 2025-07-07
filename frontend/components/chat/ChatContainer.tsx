@@ -86,7 +86,11 @@ export function ChatContainer() {
     
     if (savedSettings) {
       const parsedSettings = JSON.parse(savedSettings);
-      setSettings(parsedSettings);
+      // Merge saved settings with defaults to ensure all fields exist
+      setSettings({
+        ...DEFAULT_SETTINGS,
+        ...parsedSettings,
+      });
     }
   }, []);
 
@@ -438,6 +442,10 @@ export function ChatContainer() {
 
   const handleSaveSettings = (newSettings: Settings) => {
     setSettings(newSettings);
+    
+    // Immediately save to localStorage for persistence
+    localStorage.setItem('chat-settings', JSON.stringify(newSettings));
+    
     // If the modal was opened due to missing API key, close the message if key is now set
     if (newSettings.apiKey) {
       setSettingsModalMessage('');

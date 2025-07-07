@@ -209,7 +209,7 @@ export function SettingsModal({
               <p className="text-xs text-blue-500 mt-1">Validating your API key{'.'.repeat(dotCount)}</p>
             )}
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              You must set your API key to use the chat features.
+              You must set your API key to use the chat features. Your API key is saved securely in your browser's local storage.
             </p>
           </div>
 

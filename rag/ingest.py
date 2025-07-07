@@ -3,6 +3,7 @@ import tempfile
 import os
 import hashlib
 import uuid
+import re
 from typing import List, Dict, Any
 from fastapi import UploadFile, HTTPException
 import logging
@@ -13,6 +14,46 @@ from core.qdrant_client import get_qdrant, ensure_collection_exists
 from qdrant_client.models import PointStruct
 
 logger = logging.getLogger(__name__)
+
+def clean_pdf_text(text: str) -> str:
+    """
+    Clean PDF text by removing special characters and formatting issues
+    
+    Args:
+        text: Raw text from PDF
+        
+    Returns:
+        Cleaned text suitable for embedding
+    """
+    if not text:
+        return ""
+    
+    # Replace common PDF artifacts and special characters
+    text = re.sub(r'[^\w\s\.\,\;\:\!\?\-\(\)\[\]\{\}\'\"]+', ' ', text)  # Keep basic punctuation
+    text = re.sub(r'\s+', ' ', text)  # Normalize whitespace
+    text = re.sub(r'\.{3,}', '...', text)  # Normalize ellipsis
+    text = re.sub(r'-{2,}', '--', text)  # Normalize dashes
+    text = text.replace('\x00', '')  # Remove null characters
+    text = text.replace('\ufeff', '')  # Remove BOM
+    text = text.replace('\xa0', ' ')  # Replace non-breaking space
+    text = text.replace('\t', ' ')  # Replace tabs with spaces
+    
+    # Remove excessive line breaks but preserve paragraph structure
+    text = re.sub(r'\n{3,}', '\n\n', text)
+    text = re.sub(r'[ \t]*\n[ \t]*', '\n', text)  # Clean line endings
+    
+    # Remove lines that are just numbers (page numbers, etc.)
+    lines = text.split('\n')
+    cleaned_lines = []
+    for line in lines:
+        line = line.strip()
+        if line and not line.isdigit() and len(line) > 1:
+            cleaned_lines.append(line)
+    
+    text = '\n'.join(cleaned_lines)
+    text = text.strip()
+    
+    return text
 
 class DocumentIngestor:
     """Handles document ingestion to Qdrant using aimakerspace components"""
@@ -66,8 +107,23 @@ class DocumentIngestor:
             
             logger.info(f"Extracted {len(documents)} document(s) from PDF")
             
+            # Clean the extracted text to remove special characters and artifacts
+            cleaned_documents = []
+            for doc in documents:
+                cleaned_text = clean_pdf_text(doc)
+                if cleaned_text:  # Only include non-empty cleaned documents
+                    cleaned_documents.append(cleaned_text)
+            
+            if not cleaned_documents:
+                raise HTTPException(
+                    status_code=400,
+                    detail="No usable text could be extracted from the PDF after cleaning"
+                )
+            
+            logger.info(f"Cleaned documents, {len(cleaned_documents)} usable document(s)")
+            
             # Split text into chunks using aimakerspace splitter
-            chunks = self.text_splitter.split_texts(documents)
+            chunks = self.text_splitter.split_texts(cleaned_documents)
             logger.info(f"Created {len(chunks)} text chunks")
             
             # Generate embeddings for chunks

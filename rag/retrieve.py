@@ -20,7 +20,7 @@ class DocumentRetriever:
         self, 
         query: str, 
         limit: int = 5,
-        score_threshold: float = 0.7
+        score_threshold: float = 0.75
     ) -> List[Dict[str, Any]]:
         """
         Search for documents similar to the query
@@ -86,7 +86,7 @@ class DocumentRetriever:
         relevant_docs = await self.search_similar_documents(
             query=query,
             limit=max_chunks,
-            score_threshold=0.7
+            score_threshold=0.75
         )
         
         if not relevant_docs:

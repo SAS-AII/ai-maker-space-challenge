@@ -38,16 +38,19 @@ app.include_router(knowledge_router)
 
 logger = AppLogger(__name__).get_logger()
 
-# Add middleware to log all incoming requests
+# Add middleware to log all incoming requests (without sensitive data)
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
     logger.info(f"Incoming request: {request.method} {request.url.path}")
-    logger.info(f"Headers: {dict(request.headers)}")
-    try:
-        body = await request.body()
-        logger.info(f"Body: {body.decode('utf-8', errors='replace')}")
-    except Exception as e:
-        logger.error(f"Could not read body: {e}")
+    
+    # Log headers but exclude sensitive ones
+    safe_headers = {k: v for k, v in dict(request.headers).items() 
+                   if k.lower() not in ['authorization', 'x-api-key']}
+    logger.info(f"Headers: {safe_headers}")
+    
+    # Don't log request body as it may contain API keys in form data
+    logger.info("Request body: [REDACTED - contains form data]")
+    
     response = await call_next(request)
     logger.info(f"Response status: {response.status_code}")
     return response
@@ -118,36 +121,58 @@ async def chat(
         
         if last_user_message:
             try:
-                # Get context from knowledge base
-                context_data = await document_retriever.get_context_for_query(
-                    query=last_user_message,
-                    max_chunks=5,
-                    max_chars=4000
-                )
+                # First check if knowledge base has any documents
+                from core.qdrant_client import get_qdrant
+                client = get_qdrant()
+                collection_info = client.get_collection("knowledge_base")
                 
-                if context_data.get("context_count", 0) > 0:
-                    # Format RAG prompts
-                    system_prompt = format_rag_system_prompt()
-                    user_prompt = format_rag_user_prompt(
-                        context=context_data["context"],
-                        context_count=context_data["context_count"],
-                        similarity_scores=context_data["similarity_scores"],
-                        user_query=last_user_message
+                if collection_info.points_count == 0:
+                    # No documents uploaded yet - return standard message
+                    logger.info("RAG enabled but no knowledge uploaded yet")
+                    messages_list = [
+                        {"role": "system", "content": "You are a helpful assistant. When the user asks questions and RAG is enabled but no knowledge is available, inform them that no knowledge has been uploaded yet."},
+                        {"role": "user", "content": "Sorry, I have no knowledge to work with. Please upload some documents first to enable knowledge-based responses."}
+                    ]
+                else:
+                    # Get context from knowledge base
+                    context_data = await document_retriever.get_context_for_query(
+                        query=last_user_message,
+                        max_chunks=5,
+                        max_chars=4000
                     )
                     
-                    # Replace messages with RAG-enhanced versions
-                    messages_list = [
-                        {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": user_prompt}
-                    ]
-                    
-                    logger.info(f"Enhanced message with RAG context from {context_data['context_count']} sources")
-                else:
-                    logger.info("No relevant context found for RAG, proceeding with original message")
+                    if context_data.get("context_count", 0) > 0:
+                        # Format RAG prompts
+                        system_prompt = format_rag_system_prompt()
+                        user_prompt = format_rag_user_prompt(
+                            context=context_data["context"],
+                            context_count=context_data["context_count"],
+                            similarity_scores=context_data["similarity_scores"],
+                            user_query=last_user_message
+                        )
+                        
+                        # Replace messages with RAG-enhanced versions
+                        messages_list = [
+                            {"role": "system", "content": system_prompt},
+                            {"role": "user", "content": user_prompt}
+                        ]
+                        
+                        logger.info(f"Enhanced message with RAG context from {context_data['context_count']} sources")
+                    else:
+                        # No relevant context found - return "I don't know" response
+                        logger.info("No relevant context found for RAG query")
+                        messages_list = [
+                            {"role": "system", "content": "You are a helpful assistant that only answers questions based on provided knowledge. When no relevant information is found, you should apologize and state that you don't know the answer."},
+                            {"role": "user", "content": "Sorry, I don't know the answer to that question based on the knowledge I have available."}
+                        ]
                     
             except Exception as e:
-                logger.error(f"RAG processing error: {e}, proceeding without RAG")
-                # Continue with original message if RAG fails
+                logger.error(f"RAG processing error: {e}, falling back to 'no knowledge' response")
+                # Return error message instead of proceeding without RAG
+                messages_list = [
+                    {"role": "system", "content": "You are a helpful assistant. There was an error accessing the knowledge base."},
+                    {"role": "user", "content": "Sorry, there was an error accessing my knowledge base. Please try again later."}
+                ]
 
     # User-provided apiKey
     openai_client = openai.OpenAI(api_key=apiKey)
