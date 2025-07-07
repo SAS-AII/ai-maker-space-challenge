@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { ChatSession } from '@/types/chat';
 import { formatDate } from '@/lib/utils';
 import { Button } from '@/components/ui/Button';
-import { PenLine, Trash2, ArrowLeftFromLine, ArrowRightFromLine } from 'lucide-react';
+import { PenLine, Trash2, ArrowLeftFromLine, ArrowRightFromLine, BookOpen, Upload } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { KnowledgeUploader } from './KnowledgeUploader';
 
 interface ChatSidebarProps {
   sessions: ChatSession[];
@@ -24,6 +25,12 @@ export function ChatSidebar({
   onNewChat,
   onDeleteSession,
 }: ChatSidebarProps) {
+  const [showKnowledgeUploader, setShowKnowledgeUploader] = useState(false);
+
+  const handleUploadComplete = (filename: string, result: any) => {
+    console.log('Knowledge uploaded:', filename, result);
+    // Could add a toast notification here
+  };
   return (
     <>
       {/* Desktop Sidebar */}
@@ -76,6 +83,42 @@ export function ChatSidebar({
             )}
           </Button>
         </div>
+
+        {/* Knowledge Management Section */}
+        {!isCollapsed && (
+          <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                Knowledge Base
+              </h3>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowKnowledgeUploader(!showKnowledgeUploader)}
+                className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
+              >
+                <BookOpen size={16} />
+              </Button>
+            </div>
+            
+            {showKnowledgeUploader && (
+              <KnowledgeUploader
+                onUploadComplete={handleUploadComplete}
+                className="mb-4"
+              />
+            )}
+            
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowKnowledgeUploader(!showKnowledgeUploader)}
+              className="w-full"
+            >
+              <Upload size={16} className="mr-2" />
+              {showKnowledgeUploader ? 'Hide Uploader' : 'Add Knowledge'}
+            </Button>
+          </div>
+        )}
 
         {/* Chat Sessions List (hide when minimized) */}
         {!isCollapsed && (

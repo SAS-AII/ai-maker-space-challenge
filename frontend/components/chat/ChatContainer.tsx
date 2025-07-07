@@ -41,6 +41,7 @@ export function ChatContainer() {
   const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
   const [pendingMessage, setPendingMessage] = useState<string>('');
   const [pendingImagesForRetry, setPendingImagesForRetry] = useState<File[]>([]);
+  const [useRAG, setUseRAG] = useState(false);
 
   // --- Smooth but throttled scroll helpers ---------------------------------
   // Instead of performing a smooth scroll **on every token**, we debounce the
@@ -340,6 +341,8 @@ export function ChatContainer() {
       }
       // Include selected model so backend can use it
       formData.set('model', (currentSession?.model || settings.model) as string);
+      // Include RAG setting
+      formData.set('useRAG', useRAG.toString());
 
       const stream = await sendChatMessage(formData);
 
@@ -568,6 +571,18 @@ export function ChatContainer() {
               <ModelSelector
                 selectedModel={currentSession?.model || settings.model}
                 onModelChange={handleSessionModelChange}
+              />
+            </div>
+            {/* RAG Toggle */}
+            <div className="hidden md:flex items-center gap-2">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                RAG
+              </label>
+              <input
+                type="checkbox"
+                checked={useRAG}
+                onChange={(e) => setUseRAG(e.target.checked)}
+                className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
               />
             </div>
           </div>

@@ -1,6 +1,4 @@
 ---
-description: 
-globs: 
 alwaysApply: false
 ---
 # Backend API Rules — **FastAPI + Python 3.12**

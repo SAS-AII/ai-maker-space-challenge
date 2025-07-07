@@ -1,41 +1,95 @@
 ---
-description: When designing a frontend or frontend components.
-globs: 
+description: Guidelines for designing and implementing frontend components.
+globs:
+  - frontend/**
 alwaysApply: false
 ---
-# Frontend Chat Application Rules
 
-- **Framework & Language**: Use Next.js 14+ with TypeScript.
-- **Output Path**: Place the generated frontend code under the `frontend/` folder.
-- **Components**: React functional components with hooks.
-- **Styling**: Tailwind CSS; ensure high contrast and visual clarity.
-- **Responsive**: Mobile-first, responsive layout across devices.
-- **Accessibility**: Follow WCAG (aria-labels, keyboard navigation).
+# Frontend Chat Application Rules – Enhanced v2
 
-- **Chat Window**
-  - Alternating message bubbles: left = user, right = assistant.
-  - Render timestamps (e.g. “10:24 AM”) under each bubble.
-  - Support inline image attachments; clicking an image opens a lightbox.
+## Core Philosophy
+- **Clean, isolated components**: *Every feature belongs in its own well-named, self-contained React component*. Keep public props minimal, prefer composition over large monoliths, and colocate feature-specific hooks, styles, and tests alongside the component.
 
-- **Sidebar Chat List**
-  - Collapsible left sidebar listing chat sessions with title and creation date.
-  - “New Chat” button at top.
-  - Delete icon next to each session to remove it.
+## Framework & Tooling
+- **Framework / Language**: Next.js 14+ with TypeScript (app router preferred).
+- **Output Path**: All frontend source lives in the `frontend/` folder.
+- **Components**: React functional components with hooks; avoid class components.
+- **Styling**: Tailwind CSS — enforce high contrast and visual clarity (`darkMode: 'class'`).
+- **State Management**: Local state via hooks; global/shared state via Zustand or React Context (small apps) — no Redux unless justified.
+- **Routing**: Use the Next.js `app/` router with `route.js` handlers for server actions when possible.
+- **Data Fetching**: Prefer `react-query` or Next.js `fetch()` + server actions; cache aggressively and add SWR where read-heavy.
+- **Testing**: Jest + React Testing Library for unit/integration tests; Cypress Playwright for E2E.
+- **Linting & Formatting**: ESLint (airbnb-plus-tailwind rules) and Prettier; CI must fail on lint errors.
 
-- **Input Area**
-  - Text input with placeholder “Type a message…”, a Send button, and an image-upload control.
-  - Drag-and-drop image support optional.
+## Cross-Cutting Requirements
+- **Responsive**: Mobile-first layouts, fluid typography (`clamp()`), and CSS Grid/Flexbox.
+- **Accessibility**: WCAG 2.2 AA — semantic HTML, `aria-*`, correct heading order, focus rings, keyboard navigation.
+- **Performance**:  
+  - Use `next/image` for all images.  
+  - Lazy-load heavy components with `dynamic(() => import(...), { ssr: false })`.  
+  - Inline critical CSS; tree-shake unused Tailwind classes via `content` glob rules.
+- **Security**: Escape user content (`dangerouslySetInnerHTML` only with sanitization), use strict CSP headers, validate file types client-side and server-side.
 
-- **Settings Panel**
-  - Accessible via an icon in the header.
-  - Form fields for **Developer Prompt** and **System Prompt**.
-  - Dropdown selector for model (e.g. gpt-4.1-nano, gpt-4o-mini) styled like ChatGPT’s.
+## Project Structure
+frontend/
+│
+├─ app/ # Next.js app router
+│ ├─ (routes)
+│ ├─ layout.tsx
+│ └─ globals.css
+│
+├─ components/ # Shared, reusable components
+│ └─ ChatMessage/
+│ ├─ ChatMessage.tsx
+│ ├─ ChatMessage.test.tsx
+│ └─ styles.module.css
+│
+├─ features/ # One folder per feature (clean component principle)
+│ ├─ ChatInput/
+│ │ ├─ ChatInput.tsx
+│ │ ├─ ChatInput.test.tsx
+│ │ └─ index.ts
+│ └─ KnowledgeUploader/ # Drag-and-drop RAG uploader (example)
+│ ├─ KnowledgeUploader.tsx
+│ ├─ KnowledgeUploader.test.tsx
+│ └─ index.ts
+│
+├─ hooks/ # Custom reusable hooks
+├─ lib/ # API clients, utilities
+└─ styles/ # Tailwind config / global styles
 
-- **Local & Deployment**
-  - Provide `npm run dev` for local testing.
-  - Include `vercel.json` or Next.js config for Vercel deployment.
+## Feature Specifications
 
-- **Project Structure**
-  - Use **app/** or **pages/** router consistently.
-  - Shared components under **components/**.
-  - Styles in **styles/** or alongside components as CSS modules.
+### Chat Window
+- Alternating bubbles: left = user, right = assistant.
+- Timestamps (e.g. **“10:24 AM”**) under each bubble.
+- Inline image attachments; click opens a lightbox (`@headlessui/react` + `@heroicons/react`).
+
+### Sidebar Chat List
+- Collapsible left sidebar listing sessions (title + creation date).
+- **New Chat** button at the top.
+- Delete icon with confirmation dialog for each session.
+
+### Input Area
+- Text field (`placeholder="Type a message…"`) + Send button.
+- Image-upload button and drag-and-drop support.
+- Auto-resize textarea up to 6 lines.
+
+### Settings Panel
+- Open via cog icon in header.
+- Form fields for **Developer Prompt** and **System Prompt**.
+- Model selector (`gpt-4.1-nano`, `gpt-4o-mini`, …) styled like ChatGPT.
+
+### Knowledge Uploader (RAG)
+- Entry point text: **“Add new knowledge for me”**.
+- Accept PDF / DOCX via click or drag-and-drop.
+- Show upload progress and success/error toasts.
+- POST to `/api/v1/knowledge/upload`; no files stored locally.
+
+## Dev & Deployment
+- Local: `npm run dev` (uses `.env.local`).
+- Deployment: Include `vercel.json` with `outputDirectory: "frontend/.next"`.
+- Use environment variables (prefixed `NEXT_PUBLIC_` for client) — never commit secrets.
+
+---
+**Remember**: isolate features into clean components, keep props narrow, and favor composition. Follow these rules for every pull request.

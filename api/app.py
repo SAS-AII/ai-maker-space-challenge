@@ -14,8 +14,13 @@ from core.logger import AppLogger
 
 from schemas.openai_schemas import ChatRequest, ChatResponse
 
+# Import RAG components
+from rag.retrieve import document_retriever
+from rag.prompts import format_rag_system_prompt, format_rag_user_prompt
+from api.knowledge import router as knowledge_router
+
 # Initialize FastAPI application with a title
-app = FastAPI(title="OpenAI Chat API")
+app = FastAPI(title="OpenAI Chat API with RAG")
 
 # Configure CORS (Cross-Origin Resource Sharing) middleware
 # This allows the API to be accessed from different domains/originsP
@@ -26,6 +31,9 @@ app.add_middleware(
     allow_methods=["*"],  # Allows all HTTP methods (GET, POST, etc.)
     allow_headers=["*"],  # Allows all headers in requests
 )
+
+# Include RAG knowledge management router
+app.include_router(knowledge_router)
 
 
 logger = AppLogger(__name__).get_logger()
@@ -49,11 +57,15 @@ async def chat(
     messages: str = Form(...),
     images: Optional[List[UploadFile]] = File(None),
     apiKey: Optional[str] = Form(None),
-    model: str = Form("gpt-4o-mini")
+    model: str = Form("gpt-4o-mini"),
+    useRAG: bool = Form(False)
 ):
     """
-    Accepts a list of messages and optional images, forwards to OpenAI with streaming,
-    and proxies the chunks back to the client as a text stream.
+    Enhanced chat endpoint with RAG support
+    - useRAG=True: Uses RAG to search knowledge base and enhance answers
+    - useRAG=False: Regular chat (original behavior)
+    - Accepts a list of messages and optional images
+    - Forwards to OpenAI with streaming
     """
     if not apiKey:
         logger.error("API key is required. Please provide your OpenAI API key in the settings.")
@@ -82,8 +94,60 @@ async def chat(
             })
 
     logger.info(
-        f"Received chat request: model={model}, messages_count={len(messages_list)}, images_count={len(images) if images else 0}"
+        f"Received chat request: model={model}, messages_count={len(messages_list)}, images_count={len(images) if images else 0}, useRAG={useRAG}"
     )
+
+    # Enhanced logic for RAG
+    if useRAG and messages_list:
+        # Get the last user message for RAG
+        last_user_message = None
+        for msg in reversed(messages_list):
+            if msg.get("role") == "user":
+                # Handle both text and image messages
+                if isinstance(msg.get("content"), str):
+                    last_user_message = msg["content"]
+                    break
+                elif isinstance(msg.get("content"), list):
+                    # Find text content in multi-modal messages
+                    for content_item in msg["content"]:
+                        if content_item.get("type") == "text":
+                            last_user_message = content_item.get("text", "")
+                            break
+                    if last_user_message:
+                        break
+        
+        if last_user_message:
+            try:
+                # Get context from knowledge base
+                context_data = await document_retriever.get_context_for_query(
+                    query=last_user_message,
+                    max_chunks=5,
+                    max_chars=4000
+                )
+                
+                if context_data.get("context_count", 0) > 0:
+                    # Format RAG prompts
+                    system_prompt = format_rag_system_prompt()
+                    user_prompt = format_rag_user_prompt(
+                        context=context_data["context"],
+                        context_count=context_data["context_count"],
+                        similarity_scores=context_data["similarity_scores"],
+                        user_query=last_user_message
+                    )
+                    
+                    # Replace messages with RAG-enhanced versions
+                    messages_list = [
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": user_prompt}
+                    ]
+                    
+                    logger.info(f"Enhanced message with RAG context from {context_data['context_count']} sources")
+                else:
+                    logger.info("No relevant context found for RAG, proceeding with original message")
+                    
+            except Exception as e:
+                logger.error(f"RAG processing error: {e}, proceeding without RAG")
+                # Continue with original message if RAG fails
 
     # User-provided apiKey
     openai_client = openai.OpenAI(api_key=apiKey)

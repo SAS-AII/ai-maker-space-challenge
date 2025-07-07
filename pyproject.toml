@@ -10,5 +10,7 @@ dependencies = [
     "openai",
     "pydantic>=2.11.4",
     "pydantic-settings>=2.4.0",
+    "pypdf2>=3.0.1",
+    "qdrant-client>=1.14.3",
     "uvicorn>=0.34.2",
 ]
