@@ -672,7 +672,7 @@ export function ChatContainer() {
                 />
                 
                 {/* Welcome Banner for new chats */}
-                {isNewEmptyChat && !hasShownWelcome && (
+                {isNewEmptyChat && (
                   <WelcomeBanner
                     isNewChat={true}
                     onAnimationComplete={() => setHasShownWelcome(true)}

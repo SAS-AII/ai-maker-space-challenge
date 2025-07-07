@@ -38,6 +38,11 @@ export function KnowledgeManager({
   } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Allowed extensions for developer knowledge files
+  const ALLOWED_EXTENSIONS = [
+    '.pdf', '.txt', '.md', '.py', '.js', '.ts', '.tsx', '.json', '.csv', '.sql', '.html', '.css', '.yaml', '.yml', '.java'
+  ];
+
   // Load existing files on mount
   useEffect(() => {
     loadKnowledgeFiles();
@@ -125,15 +130,18 @@ export function KnowledgeManager({
 
   const handleFileUpload = useCallback(async (files: FileList | File[]) => {
     const fileArray = Array.from(files);
-    const pdfFiles = fileArray.filter(file => file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf'));
-    
-    if (pdfFiles.length === 0) {
-      alert('Please select PDF files only.');
+    const validFiles = fileArray.filter(file => {
+      const ext = '.' + file.name.split('.').pop()?.toLowerCase();
+      return ALLOWED_EXTENSIONS.includes(ext);
+    });
+
+    if (validFiles.length === 0) {
+      alert(`No supported files found. Allowed extensions: ${ALLOWED_EXTENSIONS.join(', ')}`);
       return;
     }
 
     // Add files to uploaded files list with uploading status
-    const newUploadedFiles: UploadedFile[] = pdfFiles.map(file => ({
+    const newUploadedFiles: UploadedFile[] = validFiles.map(file => ({
       file,
       status: 'uploading' as const
     }));
@@ -141,8 +149,8 @@ export function KnowledgeManager({
     setUploadedFiles(prev => [...prev, ...newUploadedFiles]);
 
     // Upload each file
-    for (let i = 0; i < pdfFiles.length; i++) {
-      const file = pdfFiles[i];
+    for (let i = 0; i < validFiles.length; i++) {
+      const file = validFiles[i];
       const formData = new FormData();
       formData.append('file', file);
 
@@ -269,7 +277,7 @@ export function KnowledgeManager({
         <input
           ref={fileInputRef}
           type="file"
-          accept=".pdf,application/pdf"
+          accept=".pdf,.txt,.md,.py,.js,.ts,.tsx,.json,.csv,.sql,.html,.css,.yaml,.yml,.java"
           multiple
           onChange={handleFileInputChange}
           className="hidden"
@@ -286,7 +294,7 @@ export function KnowledgeManager({
           Choose Files
         </Button>
         <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-          Only PDF files are supported
+          Supported: PDF, TXT, MD, PY, JS, TS, JSON, CSV, SQL, HTML, CSS, YAML, JAVA
         </p>
       </div>
 

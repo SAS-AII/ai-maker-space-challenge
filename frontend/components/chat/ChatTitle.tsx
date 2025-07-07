@@ -57,7 +57,7 @@ export const ChatTitle: React.FC<ChatTitleProps> = ({
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className="mb-6 border-b border-gray-200 dark:border-gray-700 pb-4"
+      className="mb-4 text-center"
     >
       <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
         {displayedTitle}

@@ -21,7 +21,6 @@ export const WelcomeBanner: React.FC<WelcomeBannerProps> = ({
   onAnimationComplete,
 }) => {
   const { userName } = useAppStore();
-  const [hasShown, setHasShown] = useState(false);
   const [showSubtitle, setShowSubtitle] = useState(false);
 
   const welcomeText = `Welcome to ${userName}'s Room`;
@@ -47,23 +46,21 @@ export const WelcomeBanner: React.FC<WelcomeBannerProps> = ({
   useEffect(() => {
     if (welcomeComplete && showSubtitle) {
       const timeout = setTimeout(() => {
-        setHasShown(true);
         onAnimationComplete?.();
       }, 1000);
       return () => clearTimeout(timeout);
     }
   }, [welcomeComplete, showSubtitle, onAnimationComplete]);
 
-  // Reset state when switching to new chat
+  // Reset subtitle when switching chats
   useEffect(() => {
     if (!isNewChat) {
-      setHasShown(false);
       setShowSubtitle(false);
     }
   }, [isNewChat]);
 
-  // Only show for new chats and only once per session
-  if (!isNewChat || hasShown) {
+  // Only render during new chat sessions
+  if (!isNewChat) {
     return null;
   }
 

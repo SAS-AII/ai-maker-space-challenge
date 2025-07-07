@@ -255,16 +255,23 @@ class DocumentIngestor:
         Returns:
             Dict with ingestion results
         """
-        if not file.filename.lower().endswith('.pdf'):
+        # Determine file extension
+        file_ext = os.path.splitext(file.filename)[1].lower()
+
+        SUPPORTED_EXTS = [
+            '.pdf', '.txt', '.md', '.py', '.js', '.ts', '.tsx', '.json', '.csv', '.sql', '.html', '.css', '.yaml', '.yml', '.java'
+        ]
+
+        if file_ext not in SUPPORTED_EXTS:
             raise HTTPException(
-                status_code=400, 
-                detail="Only PDF files are supported currently"
+                status_code=400,
+                detail=f"Unsupported file type '{file_ext}'. Supported: {', '.join(SUPPORTED_EXTS)}"
             )
         
         temp_file_path = None
         try:
             # Create temporary file
-            with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp_file:
+            with tempfile.NamedTemporaryFile(delete=False, suffix=file_ext) as tmp_file:
                 # Read file bytes and write to temp file
                 file_content = await file.read()
                 tmp_file.write(file_content)
@@ -272,17 +279,23 @@ class DocumentIngestor:
             
             logger.info(f"Processing file: {file.filename} (temp: {temp_file_path})")
             
-            # Load PDF using aimakerspace PDFLoader
-            pdf_loader = PDFLoader(temp_file_path)
-            documents = pdf_loader.load_documents()
+            if file_ext == '.pdf':
+                # Load PDF using aimakerspace PDFLoader
+                pdf_loader = PDFLoader(temp_file_path)
+                documents = pdf_loader.load_documents()
+            else:
+                # For text/code files, read entire content
+                with open(temp_file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                    text_content = f.read()
+                documents = [text_content]
             
             if not documents:
                 raise HTTPException(
                     status_code=400,
-                    detail="No text could be extracted from the PDF"
+                    detail="No text could be extracted from the file"
                 )
             
-            logger.info(f"Extracted {len(documents)} document(s) from PDF")
+            logger.info(f"Extracted {len(documents)} document(s) from file")
             
             # Clean the extracted text to remove special characters and artifacts
             cleaned_documents = []
@@ -294,7 +307,7 @@ class DocumentIngestor:
             if not cleaned_documents:
                 raise HTTPException(
                     status_code=400,
-                    detail="No usable text could be extracted from the PDF after cleaning"
+                    detail="No usable text could be extracted from the file after cleaning"
                 )
             
             logger.info(f"Cleaned documents, {len(cleaned_documents)} usable document(s)")
@@ -327,7 +340,7 @@ class DocumentIngestor:
                     "chunk_index": i,
                     "total_chunks": len(all_chunks),
                     "file_hash": file_hash,
-                    "content_type": "pdf"
+                    "content_type": file_ext.lstrip('.')
                 }
                 
                 # Add chapter metadata if available
