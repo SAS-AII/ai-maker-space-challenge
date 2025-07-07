@@ -152,7 +152,7 @@ export function ChatInput({
                 onClick={onStopGeneration}
                 disabled={!onStopGeneration}
                 aria-label="Stop generation"
-                className="bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-800 text-white border-red-600 focus:ring-red-500"
+                className="!bg-red-600 !hover:bg-red-700 !dark:bg-red-700 !dark:hover:bg-red-800 !text-white !border-red-600 !opacity-100 !brightness-100 shadow-lg hover:shadow-xl !focus:ring-red-500 transition-all duration-200"
               >
                 <Square size={20} className="sm:mr-2" />
                 <span className="hidden sm:inline">Stop</span>
