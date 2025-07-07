@@ -45,11 +45,6 @@ export function KnowledgeManager({
   } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Load existing files on mount
-  useEffect(() => {
-    loadKnowledgeFiles();
-  }, [loadKnowledgeFiles]);
-
   const loadKnowledgeFiles = useCallback(async () => {
     try {
       setIsLoading(true);
@@ -64,6 +59,11 @@ export function KnowledgeManager({
       setIsLoading(false);
     }
   }, [apiEndpoint]);
+
+  // Load existing files on mount (needs to be *after* loadKnowledgeFiles is defined)
+  useEffect(() => {
+    loadKnowledgeFiles();
+  }, [loadKnowledgeFiles]);
 
   const actuallyDeleteFile = async (filename: string) => {
     try {
