@@ -27,7 +27,7 @@ export function ChatSidebar({
 }: ChatSidebarProps) {
   const [showKnowledgeManager, setShowKnowledgeManager] = useState(false);
 
-  const handleUploadComplete = (filename: string, result: any) => {
+  const handleUploadComplete = (filename: string, result: unknown) => {
     console.log('Knowledge uploaded:', filename, result);
     // Could add a toast notification here
   };

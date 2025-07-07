@@ -20,7 +20,7 @@ interface KnowledgeFile {
 
 interface KnowledgeManagerProps {
   className?: string;
-  onUploadComplete?: (filename: string, result: any) => void;
+  onUploadComplete?: (filename: string, result: unknown) => void;
   apiEndpoint?: string;
 }
 
@@ -48,7 +48,7 @@ export function KnowledgeManager({
   // Load existing files on mount
   useEffect(() => {
     loadKnowledgeFiles();
-  }, []);
+  }, [loadKnowledgeFiles]);
 
   const loadKnowledgeFiles = async () => {
     try {
@@ -210,7 +210,7 @@ export function KnowledgeManager({
         ));
       }
     }
-  }, [apiEndpoint, onUploadComplete]);
+  }, [ALLOWED_EXTENSIONS, apiEndpoint, loadKnowledgeFiles, onUploadComplete]);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -456,7 +456,7 @@ export function KnowledgeManager({
               Confirm Deletion
             </h3>
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
-              Are you sure you want to delete "{fileToDelete}"? This action cannot be undone.
+              Are you sure you want to delete &quot;{fileToDelete}&quot;? This action cannot be undone.
             </p>
             <div className="flex gap-3 justify-end">
               <Button
