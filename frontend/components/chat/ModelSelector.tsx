@@ -32,7 +32,7 @@ export function ModelSelector({
         aria-expanded={isOpen}
         aria-haspopup="listbox"
       >
-        <span>{selectedModelLabel}</span>
+        <span suppressHydrationWarning>{selectedModelLabel}</span>
         <ChevronDown 
           size={16} 
           className={cn(
