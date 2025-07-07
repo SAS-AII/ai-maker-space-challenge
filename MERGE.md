@@ -1,22 +1,58 @@
-# RAG System Improvements - Merge Instructions
+# The Code Room - Complete System Upgrade - Merge Instructions
 
 ## Overview
-This branch contains comprehensive improvements to the RAG (Retrieval-Augmented Generation) system to fix issues with document retrieval and answer generation.
+This branch contains comprehensive improvements to transform the chat application into "The Code Room" - an internal code documentation assistance tool. It includes both RAG system improvements and a complete UI overhaul.
 
 ## Key Improvements Made
 
-### 1. **Better Search Parameters**
+### **Frontend - The Code Room UI Transformation**
+
+### 1. **Product Branding & Welcome Experience**
+- Updated global title to "The Code Room" in header
+- Added animated WelcomeBanner with typewriter effect for new chats
+- Shows "Welcome to {UserName}'s Room" with customizable user name
+- Smooth framer-motion animations for enhanced UX
+
+### 2. **Enhanced File Support**
+- Upgraded KnowledgeUploader to support multiple file types:
+  - Documents: `.pdf`, `.docx`, `.txt`, `.md`
+  - Code files: `.py`, `.sql`, `.js`, `.ts`
+- Added comprehensive file validation (MIME type + extension)
+- 25MB file size limit with proper error handling
+- Enhanced drop zone with file type-specific icons
+
+### 3. **Settings & Personalization**
+- Added Name field in settings for personalized greetings
+- Implemented RAG toggle with persistent state management
+- Zustand store for app state with localStorage persistence
+- Better settings UI with improved organization
+
+### 4. **Chat Experience Improvements**
+- New placeholder text focused on code documentation use-case
+- Cmd/Ctrl+Enter keyboard shortcut for sending messages
+- Answer guard: RAG responses prefixed with "💡 Based on your documentation:"
+- Handles RAG disabled state with appropriate messaging
+
+### 5. **State Management & Persistence**
+- Created Zustand store for app settings
+- Utility files for settings and sessions management
+- Proper localStorage integration with error handling
+- TypeScript type safety throughout
+
+### **Backend - RAG System Improvements**
+
+### 6. **Better Search Parameters**
 - Lowered default score threshold from 0.7 to 0.3 for more inclusive retrieval
 - Increased default search limit from 5 to 10 results
 - Increased context size from 4000 to 6000 characters
 - Increased max chunks from 5 to 8
 
-### 2. **Query Expansion**
+### 7. **Query Expansion**
 - Added intelligent query expansion for Spanish chapter/section queries
 - Supports patterns like "capítulo 2", "de qué trata", "qué dice"
 - Automatically generates alternative phrasings for better retrieval
 
-### 3. **Improved Document Processing**
+### 8. **Improved Document Processing**
 - Enhanced text cleaning that preserves document structure
 - Smart text splitting (1500 chars vs 1000) with better overlap (300 vs 200)
 - Chapter/section detection and metadata preservation
@@ -31,14 +67,33 @@ This branch contains comprehensive improvements to the RAG (Retrieval-Augmented 
 - Maintains document order within chunks
 - Improved similarity score reporting
 
-### 6. **Debug Tools**
+### 9. **Debug Tools**
 - Added comprehensive debug endpoint `/api/v1/knowledge/debug-comprehensive`
 - Tests multiple thresholds and query expansion
 - Provides detailed analysis of retrieval results
 
-## Testing the Improvements
+## Testing the Complete System
 
-### 1. **Test with Your Original Query**
+### **Frontend Testing**
+
+### 1. **Test The Code Room Branding**
+- Verify header shows "The Code Room"
+- Check new chat shows welcome animation with user name
+- Test settings modal has Name field and RAG toggle
+
+### 2. **Test Enhanced File Upload**
+- Try uploading different file types (.py, .js, .ts, .sql, .md, .txt, .docx, .pdf)
+- Verify file validation works (reject unsupported types)
+- Test 25MB size limit enforcement
+
+### 3. **Test New Chat Experience**  
+- Check new placeholder text in chat input
+- Verify Cmd/Ctrl+Enter sends messages
+- Test RAG toggle in header persists state
+
+### **Backend Testing**
+
+### 4. **Test with Your Original Query**
 Use the new debug endpoint to test your specific query:
 ```bash
 curl -X POST "http://localhost:8000/api/v1/knowledge/debug-comprehensive" \
@@ -46,7 +101,7 @@ curl -X POST "http://localhost:8000/api/v1/knowledge/debug-comprehensive" \
   -d "query=de que trata el capitulo 2 del manual del conductor"
 ```
 
-### 2. **Check Query Expansion**
+### 5. **Check Query Expansion**
 The system should now expand your query to:
 - "de que trata el capitulo 2 del manual del conductor"
 - "capítulo 2"
@@ -55,44 +110,58 @@ The system should now expand your query to:
 - "sección 2"
 - "tema 2"
 
-### 3. **Test Different Thresholds**
+### 6. **Test Different Thresholds**
 The debug endpoint will show results for thresholds: 0.7, 0.5, 0.3, 0.2, 0.1
 
 ## Merge Instructions
 
 ### Option 1: GitHub Pull Request (Recommended)
 
-1. **Push the branch to GitHub:**
+1. **Push the branches to GitHub:**
    ```bash
+   # Push the backend improvements
    git push origin feature/improve-rag-retrieval
+   
+   # Push the frontend improvements  
+   git push origin feature/the-code-room-ui
    ```
 
-2. **Create Pull Request:**
-   - Go to your GitHub repository
-   - Click "Compare & pull request" for the new branch
-   - Add description of the improvements
+2. **Create Pull Requests:**
+   - Create separate PRs for backend and frontend changes
+   - Backend PR: "Improve RAG retrieval system"
+   - Frontend PR: "Transform to The Code Room UI"
+   - Add comprehensive descriptions of improvements
    - Request review if working with a team
 
 3. **Merge via GitHub:**
-   - Click "Merge pull request" after review
-   - Delete the feature branch
+   - Merge backend PR first (RAG improvements)
+   - Then merge frontend PR (UI transformation)
+   - Delete both feature branches
 
 ### Option 2: GitHub CLI
 
-1. **Create and merge PR via CLI:**
+1. **Create and merge PRs via CLI:**
    ```bash
-   # Create pull request
+   # Create backend PR
+   git checkout feature/improve-rag-retrieval
    gh pr create --title "Improve RAG retrieval system" \
      --body "Comprehensive improvements to RAG system for better document retrieval and answer generation"
    
-   # Merge the PR
-   gh pr merge --squash
+   # Create frontend PR  
+   git checkout feature/the-code-room-ui
+   gh pr create --title "Transform to The Code Room UI" \
+     --body "Complete UI transformation with enhanced file support, branding, and user experience"
    
-   # Delete the feature branch
+   # Merge backend PR first
+   gh pr merge feature/improve-rag-retrieval --squash
+   
+   # Merge frontend PR
+   gh pr merge feature/the-code-room-ui --squash
+   
+   # Clean up
    git checkout main
    git pull origin main
-   git branch -d feature/improve-rag-retrieval
-   git push origin --delete feature/improve-rag-retrieval
+   git branch -d feature/improve-rag-retrieval feature/the-code-room-ui
    ```
 
 ### Option 3: Direct Merge (if working alone)
@@ -101,14 +170,17 @@ The debug endpoint will show results for thresholds: 0.7, 0.5, 0.3, 0.2, 0.1
 # Switch to main branch
 git checkout main
 
-# Merge the feature branch
+# Merge backend changes first
 git merge feature/improve-rag-retrieval
+
+# Merge frontend changes
+git merge feature/the-code-room-ui
 
 # Push to remote
 git push origin main
 
 # Clean up
-git branch -d feature/improve-rag-retrieval
+git branch -d feature/improve-rag-retrieval feature/the-code-room-ui
 ```
 
 ## Post-Merge Testing
@@ -120,13 +192,24 @@ After merging, test the improvements:
 3. **Use the debug endpoint** to verify query expansion is working
 4. **Check that more relevant content** is being retrieved
 
-## Expected Results
+## Expected Results After Complete Upgrade
 
-With these improvements, your query "de que trata el capitulo 2 del manual del conductor" should now:
+### **User Experience**
+After merging both branches, users will experience:
+
+1. **Professional Branding**: Clean "The Code Room" interface focused on code documentation
+2. **Personalized Welcome**: Animated greeting with user's custom name  
+3. **Enhanced File Support**: Upload code files (.py, .js, .ts, .sql) alongside documents
+4. **Intuitive Controls**: RAG toggle, keyboard shortcuts, better visual feedback
+5. **Persistent Settings**: User preferences saved across sessions
+
+### **Improved RAG Performance**  
+Your original query "de que trata el capitulo 2 del manual del conductor" should now:
 - Successfully find content about Chapter 2
-- Return relevant chunks with lower similarity scores
-- Provide better context for the AI to generate accurate answers
+- Return relevant chunks with lower similarity scores  
+- Provide better context for AI responses with documentation prefix
 - No longer return "Sorry, I don't know" when content exists
+- Show responses like: "💡 Based on your documentation: Chapter 2 covers..."
 
 ## Troubleshooting
 
