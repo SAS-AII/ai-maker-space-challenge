@@ -2,6 +2,7 @@ import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Upload, FileText, X, CheckCircle, AlertCircle, Trash2, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Toaster, toast } from 'react-hot-toast';
 
 interface UploadedFile {
   file: File;
@@ -32,6 +33,7 @@ export function KnowledgeManager({
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [knowledgeFiles, setKnowledgeFiles] = useState<KnowledgeFile[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [fileToDelete, setFileToDelete] = useState<string | null>(null);
   const [showDuplicateDialog, setShowDuplicateDialog] = useState<{
     file: File;
     filename: string;
@@ -63,11 +65,7 @@ export function KnowledgeManager({
     }
   };
 
-  const deleteKnowledgeFile = async (filename: string) => {
-    if (!confirm(`Are you sure you want to delete "${filename}"? This action cannot be undone.`)) {
-      return;
-    }
-
+  const actuallyDeleteFile = async (filename: string) => {
     try {
       const response = await fetch(`${apiEndpoint}/files/${encodeURIComponent(filename)}`, {
         method: 'DELETE',
@@ -75,16 +73,20 @@ export function KnowledgeManager({
 
       if (response.ok) {
         const result = await response.json();
-        alert(`Successfully deleted "${filename}" (${result.chunks_deleted} chunks removed)`);
-        await loadKnowledgeFiles(); // Refresh the list
+        toast.success(`Deleted "${filename}" (${result.chunks_deleted} chunks)`);
+        await loadKnowledgeFiles();
       } else {
         const error = await response.json();
-        alert(`Error deleting file: ${error.detail}`);
+        toast.error(error.detail || 'Failed to delete');
       }
     } catch (error) {
       console.error('Error deleting file:', error);
-      alert('Error deleting file. Please try again.');
+      toast.error('Error deleting file. Please try again.');
     }
+  };
+
+  const handleDeleteClick = (filename: string) => {
+    setFileToDelete(filename);
   };
 
   const overwriteFile = async (filename: string, file: File) => {
@@ -113,9 +115,11 @@ export function KnowledgeManager({
         if (onUploadComplete) {
           onUploadComplete(filename, result);
         }
+
+        toast.success(`Overwrote "${filename}" with ${result.new_chunks} chunks`);
       } else {
         const error = await response.json();
-        throw new Error(error.detail || 'Overwrite failed');
+        toast.error(error.detail || 'Failed to overwrite');
       }
     } catch (error) {
       console.error('Overwrite error:', error);
@@ -125,6 +129,8 @@ export function KnowledgeManager({
           ? { ...uf, status: 'error' as const, message: error instanceof Error ? error.message : 'Overwrite failed' }
           : uf
       ));
+
+      toast.error('Error overwriting file. Please try again.');
     }
   };
 
@@ -136,7 +142,7 @@ export function KnowledgeManager({
     });
 
     if (validFiles.length === 0) {
-      alert(`No supported files found. Allowed extensions: ${ALLOWED_EXTENSIONS.join(', ')}`);
+      toast.error(`No supported files found. Allowed extensions: ${ALLOWED_EXTENSIONS.join(', ')}`);
       return;
     }
 
@@ -337,7 +343,7 @@ export function KnowledgeManager({
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => deleteKnowledgeFile(file.filename)}
+                  onClick={() => handleDeleteClick(file.filename)}
                   className="text-red-500 hover:text-red-700 dark:hover:text-red-400"
                   title="Delete file"
                 >
@@ -441,6 +447,41 @@ export function KnowledgeManager({
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      {fileToDelete && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-900 rounded-lg p-6 max-w-md mx-4">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+              Confirm Deletion
+            </h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
+              Are you sure you want to delete "{fileToDelete}"? This action cannot be undone.
+            </p>
+            <div className="flex gap-3 justify-end">
+              <Button
+                variant="ghost"
+                onClick={() => setFileToDelete(null)}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                className="bg-red-600 hover:bg-red-700 dark:bg-red-700"
+                onClick={() => {
+                  actuallyDeleteFile(fileToDelete);
+                  setFileToDelete(null);
+                }}
+              >
+                Delete
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Toast container */}
+      <Toaster position="bottom-left" />
     </div>
   );
 } 
