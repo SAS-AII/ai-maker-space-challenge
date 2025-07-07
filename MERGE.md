@@ -430,3 +430,56 @@ This branch implements improved loading animations and a stop button for chat ge
 
 ## Breaking Changes
 None - this is backward compatible and only enhances the existing functionality. 
+
+# Merge Instructions: Fix Button Variant TypeScript Error
+
+## Overview
+Fixed a TypeScript build error in the KnowledgeManager component where an invalid Button variant `"default"` was being used. The Button component only accepts `"primary"`, `"secondary"`, `"ghost"`, and `"outline"` variants.
+
+## Changes Made
+- **File**: `frontend/components/chat/KnowledgeManager.tsx`
+- **Line**: 441
+- **Change**: Changed `variant="default"` to `variant="primary"` for the "Overwrite" button
+- **Reason**: The "Overwrite" action is a primary action in the duplicate file dialog, making `"primary"` the semantically correct variant
+
+## How to Merge
+
+### Option 1: GitHub Pull Request (Recommended)
+1. Push the branch to GitHub:
+   ```bash
+   git push origin fix/button-variant-typescript-error
+   ```
+
+2. Create a Pull Request:
+   - Go to your GitHub repository
+   - Click "New Pull Request"
+   - Select `fix/button-variant-typescript-error` → `main`
+   - Title: "Fix: Replace invalid Button variant 'default' with 'primary'"
+   - Add description explaining the TypeScript error fix
+   - Assign reviewers and merge when approved
+
+### Option 2: GitHub CLI
+```bash
+# Push the branch
+git push origin fix/button-variant-typescript-error
+
+# Create and merge PR using GitHub CLI
+gh pr create --title "Fix: Replace invalid Button variant 'default' with 'primary'" \
+  --body "Fixed TypeScript error where 'default' is not a valid Button variant. Changed Overwrite button to use 'primary' variant which resolves Vercel build failure." \
+  --base main \
+  --head fix/button-variant-typescript-error
+
+# Merge the PR (after review if required)
+gh pr merge --squash
+```
+
+## Verification
+After merging, verify the fix by:
+1. Deploying to Vercel (should now build successfully)
+2. Testing the Knowledge Manager duplicate file dialog to ensure the "Overwrite" button still functions correctly
+
+## Impact
+- ✅ Resolves Vercel build failure
+- ✅ Maintains existing functionality
+- ✅ Uses semantically correct button variant
+- ✅ No breaking changes 
