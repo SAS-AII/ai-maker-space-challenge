@@ -49,8 +49,48 @@ def ensure_collection_exists(collection_name: str = "knowledge_base") -> None:
                 )
             )
             logger.info(f"Collection {collection_name} created successfully")
+
+            # Ensure payload indexes exist for efficient filtering (e.g., filename, file_hash)
+            # Qdrant requires an index on a payload field to use it inside a filter
+            try:
+                indexed_fields = client.get_collection(collection_name).payload_schema.keys()
+            except Exception:
+                indexed_fields = []
+
+            # Fields to ensure indexes for (keyword type)
+            for field in ["filename", "file_hash"]:
+                if field not in indexed_fields:
+                    try:
+                        logger.info(f"Creating payload index for field: {field}")
+                        client.create_payload_index(
+                            collection_name=collection_name,
+                            field_name=field,
+                            field_schema={"type": "keyword"}
+                        )
+                        logger.info(f"Index created for {field}")
+                    except Exception as ie:
+                        logger.warning(f"Could not create index for {field}: {ie}")
         else:
             logger.info(f"Collection {collection_name} already exists")
+            
+            # Ensure indexes exist regardless of whether collection was just created or already existed
+            try:
+                indexed_fields = client.get_collection(collection_name).payload_schema.keys()
+            except Exception:
+                indexed_fields = []
+
+            for field in ["filename", "file_hash"]:
+                if field not in indexed_fields:
+                    try:
+                        logger.info(f"Creating payload index for field: {field}")
+                        client.create_payload_index(
+                            collection_name=collection_name,
+                            field_name=field,
+                            field_schema={"type": "keyword"}
+                        )
+                        logger.info(f"Index created for {field}")
+                    except Exception as ie:
+                        logger.warning(f"Could not create index for {field}: {ie}")
             
     except Exception as e:
         logger.error(f"Error ensuring collection exists: {e}")
