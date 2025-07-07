@@ -161,7 +161,7 @@ export function SettingsModal({
               autoComplete="name"
             />
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              This name will appear in your welcome message: "Welcome to {localUserName}'s Room"
+              This name will appear in your welcome message: &quot;Welcome to {localUserName}&apos;s Room&quot;
             </p>
           </div>
 

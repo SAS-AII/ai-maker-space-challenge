@@ -4,6 +4,11 @@ import { Upload, FileText, X, CheckCircle, AlertCircle, Trash2, RefreshCw } from
 import { cn } from '@/lib/utils';
 import { Toaster, toast } from 'react-hot-toast';
 
+// Allowed extensions for developer knowledge files
+const ALLOWED_EXTENSIONS = [
+  '.pdf', '.txt', '.md', '.py', '.js', '.ts', '.tsx', '.json', '.csv', '.sql', '.html', '.css', '.yaml', '.yml', '.java'
+];
+
 interface UploadedFile {
   file: File;
   status: 'uploading' | 'success' | 'error' | 'duplicate';
@@ -40,17 +45,12 @@ export function KnowledgeManager({
   } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Allowed extensions for developer knowledge files
-  const ALLOWED_EXTENSIONS = [
-    '.pdf', '.txt', '.md', '.py', '.js', '.ts', '.tsx', '.json', '.csv', '.sql', '.html', '.css', '.yaml', '.yml', '.java'
-  ];
-
   // Load existing files on mount
   useEffect(() => {
     loadKnowledgeFiles();
   }, [loadKnowledgeFiles]);
 
-  const loadKnowledgeFiles = async () => {
+  const loadKnowledgeFiles = useCallback(async () => {
     try {
       setIsLoading(true);
       const response = await fetch(`${apiEndpoint}/files`);
@@ -63,7 +63,7 @@ export function KnowledgeManager({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [apiEndpoint]);
 
   const actuallyDeleteFile = async (filename: string) => {
     try {
@@ -210,7 +210,7 @@ export function KnowledgeManager({
         ));
       }
     }
-  }, [ALLOWED_EXTENSIONS, apiEndpoint, loadKnowledgeFiles, onUploadComplete]);
+  }, [apiEndpoint, loadKnowledgeFiles, onUploadComplete]);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -427,7 +427,7 @@ export function KnowledgeManager({
               File Already Exists
             </h3>
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
-              A file named "{showDuplicateDialog.filename}" already exists in your knowledge base. 
+              A file named &quot;{showDuplicateDialog.filename}&quot; already exists in your knowledge base. 
               Would you like to overwrite it with the new file?
             </p>
             <div className="flex gap-3 justify-end">

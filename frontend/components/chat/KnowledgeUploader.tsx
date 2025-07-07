@@ -11,7 +11,7 @@ interface UploadedFile {
 
 interface KnowledgeUploaderProps {
   className?: string;
-  onUploadComplete?: (filename: string, result: any) => void;
+  onUploadComplete?: (filename: string, result: unknown) => void;
   apiEndpoint?: string;
 }
 

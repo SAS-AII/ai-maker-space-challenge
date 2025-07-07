@@ -27,7 +27,7 @@ export function ChatContainer() {
   const [settings, setSettings] = useState<Settings>(() => getSettings());
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const [settingsModalMessage, setSettingsModalMessage] = useState<string>('');
+  const [_settingsModalMessage, setSettingsModalMessage] = useState<string>('');
   const [lastPrompt, setLastPrompt] = useState<string>('');
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
@@ -40,11 +40,11 @@ export function ChatContainer() {
   const [pendingMessage, setPendingMessage] = useState<string>('');
   const [pendingImagesForRetry, setPendingImagesForRetry] = useState<File[]>([]);
   const [hasShownWelcome, setHasShownWelcome] = useState(false);
-  const [titleGeneratedByAI, setTitleGeneratedByAI] = useState<Record<string, boolean>>({});
+  const [_titleGeneratedByAI, setTitleGeneratedByAI] = useState<Record<string, boolean>>({});
   const [abortController, setAbortController] = useState<AbortController | null>(null);
 
   // App store for RAG settings
-  const { userName, ragEnabled } = useAppStore();
+  const { /* userName: _userName,*/ ragEnabled } = useAppStore();
 
   // --- Smooth but throttled scroll helpers ---------------------------------
   // Instead of performing a smooth scroll **on every token**, we debounce the
