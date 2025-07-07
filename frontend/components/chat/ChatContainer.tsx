@@ -39,7 +39,6 @@ export function ChatContainer() {
   const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
   const [pendingMessage, setPendingMessage] = useState<string>('');
   const [pendingImagesForRetry, setPendingImagesForRetry] = useState<File[]>([]);
-  const [hasShownWelcome, setHasShownWelcome] = useState(false);
   const [, setTitleGeneratedByAI] = useState<Record<string, boolean>>({});
   const [abortController, setAbortController] = useState<AbortController | null>(null);
 
@@ -254,9 +253,6 @@ export function ChatContainer() {
     };
     setSessions(prev => [newSession, ...prev]);
     setCurrentSessionId(newSession.id);
-    
-    // Reset welcome banner for new chat
-    setHasShownWelcome(false);
     
     // Clear AI-generated title flag for this new session
     setTitleGeneratedByAI(prev => ({ ...prev, [newSession.id]: false }));
@@ -701,10 +697,7 @@ export function ChatContainer() {
                 
                 {/* Welcome Banner for new chats */}
                 {isNewEmptyChat && (
-                  <WelcomeBanner
-                    isNewChat={true}
-                    onAnimationComplete={() => setHasShownWelcome(true)}
-                  />
+                  <WelcomeBanner isNewChat={true} />
                 )}
                 
                 {currentSession.messages.map((message, index) => {
