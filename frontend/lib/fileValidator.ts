@@ -68,18 +68,23 @@ export const validateFile = (file: File): FileValidationResult => {
 
   // Validate MIME type if available
   const mimeType = file.type;
-  const supportedMimes = Object.keys(SUPPORTED_FILE_TYPES);
   
-  // Some browsers don't provide MIME type for code files, so fall back to extension
-  if (mimeType && !supportedMimes.includes(mimeType)) {
-    // Check if the MIME type matches the extension
-    const validExtensionsForMime = SUPPORTED_FILE_TYPES[mimeType as keyof typeof SUPPORTED_FILE_TYPES];
-    if (!validExtensionsForMime?.includes(extension)) {
-      return {
-        isValid: false,
-        error: `File type mismatch. Expected ${extension} file but got ${mimeType}`,
-      };
+  // If we have a MIME type, validate it against supported types
+  if (mimeType) {
+    const supportedMimes = Object.keys(SUPPORTED_FILE_TYPES);
+    
+    // If MIME type is supported, check if it matches the file extension
+    if (supportedMimes.includes(mimeType)) {
+      const validExtensionsForMime = SUPPORTED_FILE_TYPES[mimeType as keyof typeof SUPPORTED_FILE_TYPES];
+      if (!validExtensionsForMime.includes(extension)) {
+        return {
+          isValid: false,
+          error: `File type mismatch. Expected ${validExtensionsForMime.join(' or ')} file but got ${extension}`,
+        };
+      }
     }
+    // If MIME type is not in our supported list, we rely on extension validation above
+    // Some browsers don't provide accurate MIME types for code files
   }
 
   return {
