@@ -15,6 +15,7 @@ import { Settings as SettingsIcon, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { WelcomeBanner } from '@/features/WelcomeBanner';
 import { KnowledgeUploader } from '@/features/KnowledgeUploader';
+import { ChatTitle } from './ChatTitle';
 import { useAppStore } from '@/lib/store/appStore';
 import { getSettings, saveSettings } from '@/lib/settings';
 import { getStoredSessions, saveStoredSessions } from '@/lib/sessions';
@@ -48,6 +49,7 @@ export function ChatContainer() {
   const [pendingImagesForRetry, setPendingImagesForRetry] = useState<File[]>([]);
   const [useRAG, setUseRAG] = useState(false);
   const [hasShownWelcome, setHasShownWelcome] = useState(false);
+  const [titleGeneratedByAI, setTitleGeneratedByAI] = useState<Record<string, boolean>>({});
 
   // App store for RAG settings
   const { userName, ragEnabled } = useAppStore();
@@ -263,6 +265,9 @@ export function ChatContainer() {
     
     // Reset welcome banner for new chat
     setHasShownWelcome(false);
+    
+    // Clear AI-generated title flag for this new session
+    setTitleGeneratedByAI(prev => ({ ...prev, [newSession.id]: false }));
 
     // Auto-collapse sidebar on mobile after creating new chat
     if (window.innerWidth < 768) {
@@ -527,6 +532,9 @@ export function ChatContainer() {
       const title = cleaned.replace(/^["']|["']$/g, '').slice(0, 40).trim();
       if (!title) return; // Nothing received.
 
+      // Mark this title as AI-generated
+      setTitleGeneratedByAI(prev => ({ ...prev, [sessionId]: true }));
+
       // Animate typing – ~35 ms per character for a quick but noticeable effect.
       let i = 0;
       const interval = setInterval(() => {
@@ -656,6 +664,13 @@ export function ChatContainer() {
             <ErrorBanner onRetry={handleRetryLastPrompt} lastPrompt={lastPrompt} />
             {currentSession ? (
               <div className="space-y-4">
+                {/* Chat Title - only show when there are messages and title is not default */}
+                <ChatTitle
+                  title={currentSession.title}
+                  show={currentSession.messages.length > 0 && currentSession.title !== 'New Chat'}
+                  isAIGenerated={titleGeneratedByAI[currentSession.id] || false}
+                />
+                
                 {/* Welcome Banner for new chats */}
                 {isNewEmptyChat && !hasShownWelcome && (
                   <WelcomeBanner
