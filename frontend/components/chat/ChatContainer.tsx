@@ -726,16 +726,18 @@ export function ChatContainer() {
             {/* Standard sticky input for chats with messages or smaller screens */}
             {(!isNewEmptyChat || !hasShownWelcome) && (
               <div className="sticky bottom-0 w-full">
-                <ChatInput
-                  onSendMessage={handleSendMessage}
-                  disabled={isTyping}
-                  selectedModel={currentSession.model || settings.model}
-                  onModelChange={handleSessionModelChange}
-                  selectedImages={selectedImages}
-                  previewUrls={previewUrls}
-                  onImageUpload={handleImageUpload}
-                  onRemoveImage={removeImage}
-                />
+                <div className="max-w-4xl mx-auto">
+                  <ChatInput
+                    onSendMessage={handleSendMessage}
+                    disabled={isTyping}
+                    selectedModel={currentSession.model || settings.model}
+                    onModelChange={handleSessionModelChange}
+                    selectedImages={selectedImages}
+                    previewUrls={previewUrls}
+                    onImageUpload={handleImageUpload}
+                    onRemoveImage={removeImage}
+                  />
+                </div>
               </div>
             )}
           </>

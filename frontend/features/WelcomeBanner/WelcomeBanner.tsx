@@ -82,7 +82,7 @@ export const WelcomeBanner: React.FC<WelcomeBannerProps> = ({
         animate={{ opacity: 1 }}
         transition={{ delay: 0.2 }}
       >
-        {displayText}
+        {welcomeDisplay}
         {!welcomeComplete && (
           <motion.span
             animate={{ opacity: [0, 1, 0] }}
