@@ -743,59 +743,24 @@ export function ChatContainer() {
           </div>
         </div>
 
-        {/* Input Area - Conditionally positioned based on chat state */}
+        {/* Input Area – Always sticky at bottom to avoid unmounting */}
         {currentSession && (
-          <>
-            {/* For new empty chats on larger screens - centered layout */}
-            {isNewEmptyChat && hasShownWelcome && (
-              <div className="hidden xl:flex flex-col items-center justify-center flex-1 px-4 md:px-6">
-                <div className="w-full max-w-4xl">
-                  {/* Centered input container */}
-                  <div className="w-full">
-                    <ChatInput
-                      onSendMessage={handleSendMessage}
-                      disabled={isTyping}
-                      selectedModel={currentSession.model || settings.model}
-                      onModelChange={handleSessionModelChange}
-                      selectedImages={selectedImages}
-                      previewUrls={previewUrls}
-                      onImageUpload={handleImageUpload}
-                      onRemoveImage={removeImage}
-                      isGenerating={isTyping}
-                      onStopGeneration={handleStopGeneration}
-                    />
-                  </div>
-                  
-                  {/* Disclaimer text */}
-                  <div className="mt-4 text-center">
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      This chat can make mistakes. Don&apos;t fully trust it. :D
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-            
-            {/* Standard sticky input for chats with messages or smaller screens */}
-            {(!isNewEmptyChat || !hasShownWelcome) && (
-              <div className="sticky bottom-0 w-full">
-                <div className="max-w-4xl mx-auto">
-                  <ChatInput
-                    onSendMessage={handleSendMessage}
-                    disabled={isTyping}
-                    selectedModel={currentSession.model || settings.model}
-                    onModelChange={handleSessionModelChange}
-                    selectedImages={selectedImages}
-                    previewUrls={previewUrls}
-                    onImageUpload={handleImageUpload}
-                    onRemoveImage={removeImage}
-                    isGenerating={isTyping}
-                    onStopGeneration={handleStopGeneration}
-                  />
-                </div>
-              </div>
-            )}
-          </>
+          <div className="sticky bottom-0 w-full">
+            <div className="max-w-4xl mx-auto">
+              <ChatInput
+                onSendMessage={handleSendMessage}
+                disabled={isTyping}
+                selectedModel={currentSession.model || settings.model}
+                onModelChange={handleSessionModelChange}
+                selectedImages={selectedImages}
+                previewUrls={previewUrls}
+                onImageUpload={handleImageUpload}
+                onRemoveImage={removeImage}
+                isGenerating={isTyping}
+                onStopGeneration={handleStopGeneration}
+              />
+            </div>
+          </div>
         )}
       </div>
 
