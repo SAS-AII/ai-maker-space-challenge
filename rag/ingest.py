@@ -280,14 +280,20 @@ class DocumentIngestor:
             logger.info(f"Processing file: {file.filename} (temp: {temp_file_path})")
             
             if file_ext == '.pdf':
-                # Load PDF using aimakerspace PDFLoader
                 pdf_loader = PDFLoader(temp_file_path)
                 documents = pdf_loader.load_documents()
+            elif file_ext == '.md':
+                from aimakerspace.text_utils import MarkdownLoader
+                loader = MarkdownLoader(temp_file_path)
+                documents = loader.load_documents()
+            elif file_ext in ['.py', '.js', '.ts', '.tsx', '.java', '.sql', '.css']:
+                from aimakerspace.text_utils import CodeLoader
+                loader = CodeLoader(temp_file_path)
+                documents = loader.load_documents()
             else:
-                # For text/code files, read entire content
-                with open(temp_file_path, 'r', encoding='utf-8', errors='ignore') as f:
-                    text_content = f.read()
-                documents = [text_content]
+                from aimakerspace.text_utils import TextFileLoader
+                loader = TextFileLoader(temp_file_path)
+                documents = loader.load_documents()
             
             if not documents:
                 raise HTTPException(

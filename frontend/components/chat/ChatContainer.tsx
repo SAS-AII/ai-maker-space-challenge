@@ -47,7 +47,6 @@ export function ChatContainer() {
   const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
   const [pendingMessage, setPendingMessage] = useState<string>('');
   const [pendingImagesForRetry, setPendingImagesForRetry] = useState<File[]>([]);
-  const [useRAG, setUseRAG] = useState(false);
   const [hasShownWelcome, setHasShownWelcome] = useState(false);
   const [titleGeneratedByAI, setTitleGeneratedByAI] = useState<Record<string, boolean>>({});
 
@@ -353,8 +352,8 @@ export function ChatContainer() {
       }
       // Include selected model so backend can use it
       formData.set('model', (currentSession?.model || settings.model) as string);
-      // Include RAG setting
-      formData.set('useRAG', useRAG.toString());
+      // Include RAG setting from global store
+      formData.set('useRAG', ragEnabled.toString());
 
       const stream = await sendChatMessage(formData);
 
@@ -619,24 +618,6 @@ export function ChatContainer() {
                 onModelChange={handleSessionModelChange}
               />
             </div>
-            {/* RAG Toggle */}
-            <div className="hidden md:flex items-center gap-2">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                RAG Enabled
-              </label>
-              <input
-                type="checkbox"
-                checked={ragEnabled}
-                onChange={(e) => {
-                  // Update via app store, which will persist to localStorage
-                  useAppStore.getState().setRagEnabled(e.target.checked);
-                  if (!e.target.checked) {
-                    handleRagDisabledMessage();
-                  }
-                }}
-                className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-              />
-            </div>
           </div>
           {/* Center - Title */}
           <h1 className="absolute left-1/2 -translate-x-1/2 text-base sm:text-xl font-semibold text-gray-900 dark:text-gray-100 truncate px-2 max-w-[60vw] sm:max-w-[420px] lg:max-w-[600px]">
@@ -655,6 +636,24 @@ export function ChatContainer() {
               <SettingsIcon size={20} />
             </Button>
           </div>
+          {/* RAG Toggle */}
+          <div className="hidden md:flex items-center gap-2">
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              RAG Enabled
+            </label>
+            <input
+              type="checkbox"
+              checked={ragEnabled}
+              onChange={(e) => {
+                // Update via app store, which will persist to localStorage
+                useAppStore.getState().setRagEnabled(e.target.checked);
+                if (!e.target.checked) {
+                  handleRagDisabledMessage();
+                }
+              }}
+              className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+            />
+          </div>
         </div>
 
         {/* Chat Messages Area */}
@@ -665,11 +664,7 @@ export function ChatContainer() {
             {currentSession ? (
               <div className="space-y-4">
                 {/* Chat Title - only show when there are messages and title is not default */}
-                <ChatTitle
-                  title={currentSession.title}
-                  show={currentSession.messages.length > 0 && currentSession.title !== 'New Chat'}
-                  isAIGenerated={titleGeneratedByAI[currentSession.id] || false}
-                />
+                <ChatTitle title={currentSession.title} />
                 
                 {/* Welcome Banner for new chats */}
                 {isNewEmptyChat && (

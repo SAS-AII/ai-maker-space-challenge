@@ -121,6 +121,53 @@ class PDFLoader:
         return self.documents
 
 
+# --- Additional loaders for Knowledge Base support --------------------------
+
+
+class MarkdownLoader(TextFileLoader):
+    """Simple loader for .md files – strips front-matter and code fences."""
+
+    def __init__(self, path: str, encoding: str = "utf-8"):
+        super().__init__(path, encoding)
+
+    def load_file(self):
+        import re
+        with open(self.path, "r", encoding=self.encoding, errors="ignore") as f:
+            text = f.read()
+
+            # Remove YAML front-matter if present
+            text = re.sub(r"^---[\s\S]*?---\s+", "", text, flags=re.MULTILINE)
+
+            # Remove fenced code blocks to keep narrative text lightweight
+            text = re.sub(r"```[\s\S]*?```", "", text, flags=re.MULTILINE)
+
+            self.documents.append(text)
+
+
+class CodeLoader(TextFileLoader):
+    """Loader for source-code files (.py, .js, .ts, .java, etc.)"""
+
+    COMMENT_PREFIXES = {
+        '.py': '#',
+        '.js': '//',
+        '.ts': '//',
+        '.tsx': '//',
+        '.java': '//',
+        '.sql': '--',
+        '.css': '/*',
+    }
+
+    def load_file(self):
+        ext = os.path.splitext(self.path)[1].lower()
+        with open(self.path, "r", encoding=self.encoding, errors="ignore") as f:
+            code = f.read()
+
+            # Very light cleanup – collapse long sequences of whitespace
+            import re
+            code = re.sub(r"\s+", " ", code)
+            self.documents.append(code)
+
+
 if __name__ == "__main__":
     loader = TextFileLoader("data/KingLear.txt")
     loader.load()
