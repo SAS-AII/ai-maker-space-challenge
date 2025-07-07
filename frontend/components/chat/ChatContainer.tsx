@@ -618,6 +618,23 @@ export function ChatContainer() {
                 onModelChange={handleSessionModelChange}
               />
             </div>
+            {/* RAG Toggle */}
+            <div className="hidden md:flex items-center gap-2">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                RAG Enabled
+              </label>
+              <input
+                type="checkbox"
+                checked={ragEnabled}
+                onChange={(e) => {
+                  useAppStore.getState().setRagEnabled(e.target.checked);
+                  if (!e.target.checked) {
+                    handleRagDisabledMessage();
+                  }
+                }}
+                className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+              />
+            </div>
           </div>
           {/* Center - Title */}
           <h1 className="absolute left-1/2 -translate-x-1/2 text-base sm:text-xl font-semibold text-gray-900 dark:text-gray-100 truncate px-2 max-w-[60vw] sm:max-w-[420px] lg:max-w-[600px]">
@@ -635,24 +652,6 @@ export function ChatContainer() {
             >
               <SettingsIcon size={20} />
             </Button>
-          </div>
-          {/* RAG Toggle */}
-          <div className="hidden md:flex items-center gap-2">
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              RAG Enabled
-            </label>
-            <input
-              type="checkbox"
-              checked={ragEnabled}
-              onChange={(e) => {
-                // Update via app store, which will persist to localStorage
-                useAppStore.getState().setRagEnabled(e.target.checked);
-                if (!e.target.checked) {
-                  handleRagDisabledMessage();
-                }
-              }}
-              className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-            />
           </div>
         </div>
 

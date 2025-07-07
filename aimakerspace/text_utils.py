@@ -143,6 +143,16 @@ class MarkdownLoader(TextFileLoader):
 
             self.documents.append(text)
 
+    def load(self):
+        """Load markdown file(s) directly without .txt extension check."""
+        if os.path.isfile(self.path):
+            self.load_file()
+        elif os.path.isdir(self.path):
+            self.load_directory()
+        else:
+            raise ValueError("Provided path is neither a valid directory nor a supported markdown file.")
+        return self.documents
+
 
 class CodeLoader(TextFileLoader):
     """Loader for source-code files (.py, .js, .ts, .java, etc.)"""
@@ -166,6 +176,16 @@ class CodeLoader(TextFileLoader):
             import re
             code = re.sub(r"\s+", " ", code)
             self.documents.append(code)
+
+    def load(self):
+        """Load code file directly regardless of extension."""
+        if os.path.isfile(self.path):
+            self.load_file()
+        elif os.path.isdir(self.path):
+            self.load_directory()
+        else:
+            raise ValueError("Provided path is neither a valid directory nor a supported code file.")
+        return self.documents
 
 
 if __name__ == "__main__":
