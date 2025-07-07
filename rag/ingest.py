@@ -2,6 +2,7 @@
 import tempfile
 import os
 import hashlib
+import uuid
 from typing import List, Dict, Any
 from fastapi import UploadFile, HTTPException
 import logging
@@ -78,7 +79,8 @@ class DocumentIngestor:
             file_hash = hashlib.md5(file_content).hexdigest()
             
             for i, (chunk, embedding) in enumerate(zip(chunks, embeddings)):
-                point_id = f"{file_hash}_{i}"
+                # Use UUID for point ID (Qdrant requirement)
+                point_id = str(uuid.uuid4())
                 
                 point = PointStruct(
                     id=point_id,
