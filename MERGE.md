@@ -511,3 +511,34 @@ After merging, verify the fixes by:
 - ✅ Uses semantically correct button variant
 - ✅ Optimizes development vs production configurations
 - ✅ No breaking changes 
+
+## ✨ Hotfix Branch: `fix/qdrant-keyword-index`
+
+This hotfix addresses a runtime validation error on Vercel caused by an incompatible payload index definition ("keyword" vs "text").
+
+### Changes
+* Update `core/qdrant_client.py` to create payload indexes using the simplified string schema `"keyword"` instead of a typed dict. This prevents Pydantic validation errors when retrieving collection info with certain `qdrant-client` versions.
+
+### Merge Steps
+
+#### 1. GitHub Pull Request (recommended)
+```bash
+# Ensure you have pushed the branch (already done)
+git checkout fix/qdrant-keyword-index
+git push -u origin fix/qdrant-keyword-index
+```
+1. Open a PR on GitHub targeting `main` titled **"Hotfix: keyword index schema for Qdrant"**.
+2. Add a concise description referencing the Vercel validation error and include the log snippet for context.
+3. Request review / merge once CI passes.
+
+#### 2. GitHub CLI
+```bash
+# From the branch
+gh pr create --title "Hotfix: keyword index schema for Qdrant" \
+  --body "Fixes validation error on Vercel deployment by using 'keyword' schema string for payload index creation."
+
+# After approval
+gh pr merge --squash
+```
+
+---
