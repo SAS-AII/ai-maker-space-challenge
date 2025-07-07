@@ -65,7 +65,7 @@ def ensure_collection_exists(collection_name: str = "knowledge_base") -> None:
                         client.create_payload_index(
                             collection_name=collection_name,
                             field_name=field,
-                            field_schema={"type": "keyword"}
+                            field_schema="keyword"
                         )
                         logger.info(f"Index created for {field}")
                     except Exception as ie:
@@ -86,7 +86,7 @@ def ensure_collection_exists(collection_name: str = "knowledge_base") -> None:
                         client.create_payload_index(
                             collection_name=collection_name,
                             field_name=field,
-                            field_schema={"type": "keyword"}
+                            field_schema="keyword"
                         )
                         logger.info(f"Index created for {field}")
                     except Exception as ie:
