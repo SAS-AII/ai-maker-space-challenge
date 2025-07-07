@@ -134,11 +134,12 @@ async def chat(
                         {"role": "user", "content": "Sorry, I have no knowledge to work with. Please upload some documents first to enable knowledge-based responses."}
                     ]
                 else:
-                    # Get context from knowledge base
+                    # Get context from knowledge base with improved parameters
                     context_data = await document_retriever.get_context_for_query(
                         query=last_user_message,
-                        max_chunks=5,
-                        max_chars=4000
+                        max_chunks=8,  # Increased from 5
+                        max_chars=6000,  # Increased from 4000
+                        score_threshold=0.3  # Lowered threshold for better retrieval
                     )
                     
                     if context_data.get("context_count", 0) > 0:

@@ -76,8 +76,8 @@ async def upload_knowledge(file: UploadFile = File(...)):
 @router.post("/search")
 async def search_knowledge(
     query: str = Form(...),
-    limit: int = Form(5),
-    score_threshold: float = Form(0.7)
+    limit: int = Form(10),
+    score_threshold: float = Form(0.3)
 ):
     """
     Search the knowledge base for relevant documents
@@ -112,8 +112,8 @@ async def search_knowledge(
 @router.post("/generate-context")
 async def generate_context(
     query: str = Form(...),
-    max_chunks: int = Form(5),
-    max_chars: int = Form(4000)
+    max_chunks: int = Form(8),
+    max_chars: int = Form(6000)
 ):
     """
     Generate formatted context for RAG responses
@@ -317,6 +317,52 @@ async def overwrite_file(filename: str, file: UploadFile = File(...)):
             detail=f"Error overwriting file: {str(e)}"
         )
 
+@router.post("/debug")
+async def debug_rag_search(
+    query: str = Form(...),
+    limit: int = Form(5)
+):
+    """
+    Debug RAG search functionality
+    
+    - Shows exact search results with scores
+    - Helps troubleshoot why queries might not find relevant content
+    """
+    try:
+        logger.info(f"Debug search for: {query}")
+        
+        # Perform search
+        results = await document_retriever.search_similar_documents(
+            query=query,
+            limit=limit,
+            score_threshold=0.3  # Lower threshold for debugging
+        )
+        
+        # Get context formatting
+        context_data = await document_retriever.get_context_for_query(
+            query=query,
+            max_chunks=limit,
+            max_chars=2000
+        )
+        
+        return {
+            "query": query,
+            "raw_results": results,
+            "context_data": context_data,
+            "debug_info": {
+                "total_results": len(results),
+                "score_range": f"{min([r['similarity_score'] for r in results]):.3f} - {max([r['similarity_score'] for r in results]):.3f}" if results else "No results",
+                "avg_score": sum([r['similarity_score'] for r in results]) / len(results) if results else 0
+            }
+        }
+        
+    except Exception as e:
+        logger.error(f"Error in debug search: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Debug search error: {str(e)}"
+        )
+
 @router.get("/stats")
 async def get_knowledge_stats():
     """
@@ -345,4 +391,127 @@ async def get_knowledge_stats():
         raise HTTPException(
             status_code=500,
             detail=f"Error getting knowledge base stats: {str(e)}"
+        )
+
+@router.post("/debug-comprehensive")
+async def debug_rag_comprehensive(
+    query: str = Form(...),
+    limit: int = Form(15),  # Higher limit for debugging
+    test_thresholds: bool = Form(True)
+):
+    """
+    Comprehensive debug RAG search functionality
+    
+    - Tests multiple score thresholds
+    - Shows query expansion results
+    - Analyzes content relevance
+    - Helps troubleshoot retrieval issues
+    """
+    try:
+        logger.info(f"Comprehensive debug search for: {query}")
+        
+        debug_results = {
+            "original_query": query,
+            "query_expansion": [],
+            "threshold_tests": [],
+            "best_results": [],
+            "analysis": {}
+        }
+        
+        # Test query expansion
+        expanded_queries = document_retriever._expand_query(query)
+        debug_results["query_expansion"] = expanded_queries
+        
+        # Test different thresholds
+        if test_thresholds:
+            thresholds = [0.7, 0.5, 0.3, 0.2, 0.1]
+            for threshold in thresholds:
+                results = await document_retriever.search_similar_documents(
+                    query=query,
+                    limit=limit,
+                    score_threshold=threshold,
+                    use_query_expansion=False  # Test original query only
+                )
+                
+                debug_results["threshold_tests"].append({
+                    "threshold": threshold,
+                    "results_count": len(results),
+                    "score_range": f"{min([r['similarity_score'] for r in results]):.3f} - {max([r['similarity_score'] for r in results]):.3f}" if results else "No results",
+                    "avg_score": sum([r['similarity_score'] for r in results]) / len(results) if results else 0,
+                    "top_results": [
+                        {
+                            "filename": r["filename"],
+                            "score": r["similarity_score"],
+                            "content_preview": r["content"][:200] + "..." if len(r["content"]) > 200 else r["content"]
+                        }
+                        for r in results[:3]
+                    ]
+                })
+        
+        # Get best results with query expansion
+        best_results = await document_retriever.search_similar_documents(
+            query=query,
+            limit=limit,
+            score_threshold=0.1,  # Very low threshold for debugging
+            use_query_expansion=True
+        )
+        
+        debug_results["best_results"] = [
+            {
+                "filename": r["filename"],
+                "chunk_index": r["chunk_index"],
+                "score": r["similarity_score"],
+                "search_query": r.get("search_query", query),
+                "content": r["content"],
+                "chapter_info": {
+                    "current_chapter": r.get("current_chapter"),
+                    "chapter_number": r.get("chapter_number")
+                }
+            }
+            for r in best_results
+        ]
+        
+        # Analyze results
+        if best_results:
+            scores = [r["similarity_score"] for r in best_results]
+            debug_results["analysis"] = {
+                "total_results": len(best_results),
+                "score_statistics": {
+                    "min": min(scores),
+                    "max": max(scores),
+                    "avg": sum(scores) / len(scores),
+                    "median": sorted(scores)[len(scores)//2]
+                },
+                "filename_distribution": {},
+                "chapter_distribution": {},
+                "content_analysis": {
+                    "avg_content_length": sum(len(r["content"]) for r in best_results) / len(best_results),
+                    "content_with_chapters": sum(1 for r in best_results if r.get("current_chapter")),
+                    "content_with_numbers": sum(1 for r in best_results if any(char.isdigit() for char in r["content"]))
+                }
+            }
+            
+            # Analyze filename distribution
+            for result in best_results:
+                filename = result["filename"]
+                debug_results["analysis"]["filename_distribution"][filename] = debug_results["analysis"]["filename_distribution"].get(filename, 0) + 1
+            
+            # Analyze chapter distribution
+            for result in best_results:
+                chapter = result.get("current_chapter")
+                if chapter:
+                    debug_results["analysis"]["chapter_distribution"][chapter] = debug_results["analysis"]["chapter_distribution"].get(chapter, 0) + 1
+        else:
+            debug_results["analysis"] = {
+                "total_results": 0,
+                "issue": "No results found even with very low threshold"
+            }
+        
+        return debug_results
+        
+    except Exception as e:
+        logger.error(f"Error in comprehensive debug search: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Comprehensive debug search error: {str(e)}"
         ) 
